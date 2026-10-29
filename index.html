@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Laboratorio: comportamiento de una función</title>
+<meta name="description" content="Explorador interactivo de f, f' y f'': extremos, concavidad, asíntotas y graficado. Cálculo I (20252), Escuela de Matemáticas, UIS.">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --verde:#006747; --verde-osc:#004d35; --verde-claro:#e3f1ea; --verde-2:#b9dccb;
+  --azul:#1f5fa8; --azul-claro:#e4edf8; --rojo:#b8321f; --rojo-claro:#f8e4e0;
+  --ocre:#b7791f; --ocre-claro:#fbf0d9; --morado:#6b3fa0; --gris:#6b7280; --gris-2:#9ca3af;
+  --borde:#d9dee3; --fondo:#f4f6f5; --panel:#ffffff; --texto:#1b2430; --texto-2:#4b5563;
+  --sombra:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.1);
+  --radio:10px; --fuente:"Source Sans 3",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{font-family:var(--fuente);color:var(--texto);background:var(--fondo);font-size:15px;line-height:1.45;display:flex;flex-direction:column;min-height:100vh}
+button,input,select,textarea{font:inherit}
+h1,h2,h3,h4{margin:0;line-height:1.2}
+.katex{font-size:1.02em}
+/* ---------- cabecera */
+header.top{background:var(--verde);color:#fff;padding:10px 18px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+header.top .titulo h1{font-size:19px;font-weight:700;letter-spacing:.2px}
+header.top .titulo p{margin:2px 0 0;font-size:13px;opacity:.9}
+header.top .acciones{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+header.top button{background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:5px 12px;cursor:pointer}
+header.top button:hover{background:rgba(255,255,255,.26)}
+/* ---------- distribución */
+main.app{flex:1;display:grid;grid-template-columns:270px minmax(420px,1fr) 420px;gap:12px;padding:12px;min-height:0}
+body.embed main.app{grid-template-columns:minmax(380px,1fr) 380px;padding:8px}
+body.embed header.top,body.embed aside.catalogo,body.embed footer{display:none}
+@media (max-width:1100px){main.app{grid-template-columns:250px 1fr}aside.panel{grid-column:1/-1;max-height:620px}}
+@media (max-width:800px){main.app{grid-template-columns:1fr}section.grafica{min-height:540px}aside.catalogo{max-height:320px}}
+@media (max-width:899px){body.embed main.app{grid-template-columns:1fr}body.embed section.grafica{min-height:520px}body.embed aside.panel{max-height:none}}
+aside,section{background:var(--panel);border:1px solid var(--borde);border-radius:var(--radio);box-shadow:var(--sombra);min-width:0}
+/* ---------- catálogo */
+aside.catalogo{display:flex;flex-direction:column;overflow:hidden}
+aside.catalogo .cab{padding:10px 12px;border-bottom:1px solid var(--borde)}
+aside.catalogo .cab h2{font-size:14px;text-transform:uppercase;letter-spacing:.6px;color:var(--verde)}
+aside.catalogo input{width:100%;margin-top:8px;padding:6px 9px;border:1px solid var(--borde);border-radius:6px}
+aside.catalogo .lista{overflow:auto;flex:1;padding:6px 0}
+.grupo h3{font-size:12px;color:var(--gris);text-transform:uppercase;letter-spacing:.5px;padding:10px 12px 4px;font-weight:600}
+.item{display:flex;align-items:center;gap:8px;padding:6px 12px;cursor:pointer;border-left:3px solid transparent}
+.item:hover{background:var(--verde-claro)}
+.item.sel{background:var(--verde-claro);border-left-color:var(--verde)}
+.item .num{font-size:12px;color:var(--gris);min-width:44px}
+.item .f{flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.item .nivel{font-size:10px;font-weight:700;border-radius:4px;padding:1px 5px;color:#fff;background:var(--gris-2)}
+.item .nivel.B{background:#4f9d69}.item .nivel.I{background:#d49a2a}.item .nivel.A{background:#c45a3a}
+.libre{padding:10px 12px;border-top:1px solid var(--borde)}
+.libre label{font-size:12px;color:var(--gris);text-transform:uppercase;letter-spacing:.5px;font-weight:600}
+.libre .fila{display:flex;gap:6px;margin-top:6px}
+.libre input{flex:1;padding:6px 8px;border:1px solid var(--borde);border-radius:6px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px}
+.libre .ayuda{font-size:12px;color:var(--gris);margin-top:5px}
+/* ---------- zona de gráfica */
+section.grafica{display:flex;flex-direction:column;overflow:hidden}
+.barra{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--borde);font-size:13.5px}
+.barra .bloque{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.barra .bloque > span.et{color:var(--gris);font-weight:600;text-transform:uppercase;font-size:11px;letter-spacing:.5px}
+.chk{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border:1px solid var(--borde);border-radius:999px;cursor:pointer;user-select:none;background:#fff}
+.chk input{margin:0}
+.chk.f{border-color:var(--verde);color:var(--verde-osc)}.chk.fp{border-color:var(--azul);color:var(--azul)}.chk.fpp{border-color:var(--rojo);color:var(--rojo)}
+.chk .sw{width:14px;height:3px;border-radius:2px;background:currentColor;display:inline-block}
+.btn{border:1px solid var(--borde);background:#fff;border-radius:7px;padding:4px 10px;cursor:pointer;color:var(--texto)}
+.btn:hover{background:var(--fondo)}
+.btn.primario{background:var(--verde);border-color:var(--verde);color:#fff}.btn.primario:hover{background:var(--verde-osc)}
+.btn.peq{padding:2px 8px;font-size:12.5px}
+.lienzo{position:relative;flex:1;min-height:360px}
+canvas#plot{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:crosshair;touch-action:none}
+.leyenda{position:absolute;left:10px;top:8px;background:rgba(255,255,255,.9);border:1px solid var(--borde);border-radius:6px;padding:4px 8px;font-size:12px;display:flex;gap:10px;pointer-events:none}
+.leyenda span::before{content:"";display:inline-block;width:14px;height:3px;border-radius:2px;margin-right:4px;vertical-align:middle;background:var(--c)}
+.titulo-f{position:absolute;right:10px;top:8px;background:rgba(255,255,255,.92);border:1px solid var(--borde);border-radius:6px;padding:4px 10px;font-size:14px;max-width:60%;overflow:hidden;pointer-events:none}
+.deslizador{display:flex;align-items:center;gap:10px;padding:8px 12px;border-top:1px solid var(--borde);font-size:13.5px}
+.deslizador input[type=range]{flex:1;accent-color:var(--verde)}
+.deslizador input[type=number]{width:96px;padding:4px 6px;border:1px solid var(--borde);border-radius:6px}
+/* ---------- panel */
+aside.panel{display:flex;flex-direction:column;overflow:hidden}
+.pestanas{display:flex;border-bottom:1px solid var(--borde);overflow-x:auto}
+.pestanas button{flex:1;border:0;background:none;padding:10px 3px;cursor:pointer;color:var(--texto-2);font-weight:600;font-size:12.5px;border-bottom:3px solid transparent;white-space:nowrap}
+.pestanas button.act{color:var(--verde);border-bottom-color:var(--verde)}
+.contenido{overflow:auto;padding:12px 14px;flex:1}
+.contenido section{border:0;box-shadow:none;background:none}
+.tab{display:none}.tab.act{display:block}
+.form{display:flex;flex-direction:column;gap:6px;margin:8px 0 12px}
+.form .linea{display:flex;align-items:baseline;gap:8px;padding:6px 10px;background:var(--fondo);border-radius:7px;overflow-x:auto}
+.form .linea b{color:var(--gris);font-size:12px;min-width:28px}
+.valores{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:10px 0}
+.valor{border:1px solid var(--borde);border-radius:8px;padding:8px 10px}
+.valor .et{font-size:12px;color:var(--gris);letter-spacing:.3px}
+.valor .v{font-size:19px;font-weight:700;margin-top:2px}
+.valor.pos .v{color:var(--verde)}.valor.neg .v{color:var(--rojo)}.valor.cero .v{color:var(--ocre)}
+.interp{border-left:4px solid var(--verde);background:var(--verde-claro);padding:8px 12px;border-radius:6px;margin:8px 0;font-size:14px}
+.interp.azul{border-color:var(--azul);background:var(--azul-claro)}
+.interp.ocre{border-color:var(--ocre);background:var(--ocre-claro)}
+.interp.rojo{border-color:var(--rojo);background:var(--rojo-claro)}
+.glifo{font-size:26px;line-height:1;margin-right:8px;vertical-align:middle}
+.nota{font-size:13px;color:var(--texto-2);margin:6px 0}
+.caja{border:1px solid var(--borde);border-radius:8px;padding:10px 12px;margin:10px 0}
+.caja h4{font-size:13px;text-transform:uppercase;letter-spacing:.5px;color:var(--verde);margin-bottom:6px}
+.caja.ok{border-color:#86c7a0;background:#eef8f2}.caja.mal{border-color:#e4a89d;background:#fcf0ee}
+.msgs li{margin:3px 0}
+.recta{width:100%;height:92px;display:block;touch-action:none;user-select:none}
+.recta .base{stroke:#333;stroke-width:1.4}
+.recta .seg{cursor:pointer}
+.recta .seg rect{fill:transparent}
+.recta .seg:hover rect{fill:rgba(0,103,71,.07)}
+.recta .seg text{font-size:20px;font-weight:700;text-anchor:middle;pointer-events:none}
+.recta .pt{cursor:pointer}
+.recta .pt circle{fill:#fff;stroke:var(--verde);stroke-width:2}
+.recta .pt:hover circle{fill:var(--verde-claro)}
+.recta .pt text{font-size:11px;text-anchor:middle;fill:var(--texto-2);pointer-events:none}
+.recta .fuera{fill:url(#rayas)}
+.scroll{overflow-x:auto;margin:6px 0}
+.tabla{min-width:100%;border-collapse:collapse;font-size:13px;margin:0}
+.tabla th,.tabla td{border:1px solid var(--borde);padding:4px 6px;text-align:center}
+.tabla th{background:var(--fondo);font-weight:600}
+.tabla td.pos{color:var(--verde);font-weight:700}.tabla td.neg{color:var(--rojo);font-weight:700}
+.tabla td.fuera{background:repeating-linear-gradient(45deg,#f3f4f6,#f3f4f6 4px,#e5e7eb 4px,#e5e7eb 8px);color:var(--gris)}
+.paso{border:1px solid var(--borde);border-radius:8px;margin:8px 0;overflow:hidden}
+.paso summary{cursor:pointer;padding:8px 12px;font-weight:600;background:var(--fondo);list-style:none;display:flex;align-items:center;gap:8px}
+.paso summary::before{content:"▸";color:var(--verde);font-size:12px}
+.paso[open] summary::before{content:"▾"}
+.paso .cuerpo{padding:8px 12px}
+.sol{display:none;margin-top:8px;padding:8px 10px;background:var(--verde-claro);border-radius:6px}
+.sol.vis{display:block}
+.teoria h3{color:var(--verde);font-size:15px;margin:14px 0 6px;padding-bottom:3px;border-bottom:2px solid var(--verde-2)}
+.teoria p,.teoria li{font-size:14px;margin:4px 0}
+.teoria .def{border-left:4px solid var(--azul);background:var(--azul-claro);padding:6px 10px;border-radius:6px;margin:6px 0}
+.teoria .teo{border-left:4px solid var(--verde);background:var(--verde-claro);padding:6px 10px;border-radius:6px;margin:6px 0}
+.teoria .ojo{border-left:4px solid var(--rojo);background:var(--rojo-claro);padding:6px 10px;border-radius:6px;margin:6px 0}
+.etq{display:inline-block;font-size:11px;font-weight:700;padding:1px 6px;border-radius:4px;background:var(--gris-2);color:#fff;margin-right:4px;vertical-align:middle}
+.etq.max{background:var(--rojo)}.etq.min{background:var(--azul)}.etq.none{background:var(--gris-2)}.etq.infl{background:var(--ocre)}.etq.sing{background:var(--morado)}.etq.asint{background:#555}
+input.campo{width:100%;padding:6px 8px;border:1px solid var(--borde);border-radius:6px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px}
+.fila2{display:grid;grid-template-columns:auto 1fr;gap:6px 10px;align-items:center;margin:6px 0}
+.fila2 label{font-size:13px;color:var(--texto-2)}
+footer{font-size:12px;color:var(--gris);padding:6px 18px 10px;text-align:center}
+.oculto{display:none!important}
+kbd{font-family:inherit;border:1px solid var(--borde);border-bottom-width:2px;border-radius:4px;padding:0 5px;font-size:12px;background:#fff}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="titulo">
+    <h1>Laboratorio: comportamiento de una función</h1>
+    <p>Extremos · concavidad · asíntotas · graficado — Cálculo I (20252), Escuela de Matemáticas, UIS</p>
+  </div>
+  <div class="acciones">
+    <button id="btnAyuda" type="button">¿Cómo usar el laboratorio?</button>
+  </div>
+</header>
+
+<main class="app">
+  <!-- ======================= catálogo -->
+  <aside class="catalogo">
+    <div class="cab">
+      <h2>Funciones de la miscelánea (cap. 3)</h2>
+      <input id="buscar" type="search" placeholder="Buscar por número o fórmula…" aria-label="Buscar función">
+    </div>
+    <div class="lista" id="lista"></div>
+    <div class="libre">
+      <label for="exprLibre">Modo libre (función propia)</label>
+      <div class="fila"><input id="exprLibre" placeholder="p. ej. x^3/(x^2-1)" spellcheck="false"><button class="btn peq" id="btnLibre" type="button">Cargar</button></div>
+      <div class="ayuda">Sintaxis: <code>x^2</code>, <code>sqrt(x)</code>, <code>exp(x)</code>, <code>log(x)</code> (ln), <code>sin</code>, <code>cos</code>, <code>atan</code>, <code>abs</code>, <code>cbrt</code>. Las derivadas se calculan simbólicamente.</div>
+    </div>
+  </aside>
+
+  <!-- ======================= gráfica -->
+  <section class="grafica">
+    <div class="barra">
+      <div class="bloque"><span class="et">Capas</span>
+        <label class="chk f"><input type="checkbox" id="capaF" checked><span class="sw"></span>f</label>
+        <label class="chk fp"><input type="checkbox" id="capaFp"><span class="sw"></span>f′</label>
+        <label class="chk fpp"><input type="checkbox" id="capaFpp"><span class="sw"></span>f″</label>
+        <label class="chk"><input type="checkbox" id="capaTan" checked>tangente en x₀</label>
+      </div>
+      <div class="bloque"><span class="et">Revelar</span>
+        <label class="chk"><input type="checkbox" id="revAsin">asíntotas</label>
+        <label class="chk"><input type="checkbox" id="revCrit">críticos y singulares</label>
+        <label class="chk"><input type="checkbox" id="revInfl">inflexiones</label>
+      </div>
+      <div class="bloque"><span class="et">Vista</span>
+        <button class="btn peq" id="btnZoomIn" type="button" title="Acercar">+</button>
+        <button class="btn peq" id="btnZoomOut" type="button" title="Alejar">−</button>
+        <button class="btn peq" id="btnReset" type="button">Restablecer</button>
+      </div>
+      <div class="bloque oculto" id="bloqueAbrir"><button class="btn peq" id="btnAbrir" type="button" title="Abrir el laboratorio completo en una pestaña nueva">Abrir completo ↗</button><button class="btn peq" id="btnAyuda2" type="button">Ayuda</button></div>
+    </div>
+    <div class="lienzo">
+      <canvas id="plot"></canvas>
+      <div class="leyenda" id="leyenda"></div>
+      <div class="titulo-f" id="tituloF"></div>
+    </div>
+    <div class="deslizador">
+      <span>x₀ =</span>
+      <input type="range" id="x0r" min="-5" max="5" step="0.01" value="0.5" aria-label="x sub cero">
+      <input type="number" id="x0n" step="0.01" value="0.5" aria-label="valor de x sub cero">
+      <span class="nota" style="margin:0">Arrastre para desplazar · rueda para acercar · clic fija x₀</span>
+    </div>
+  </section>
+
+  <!-- ======================= panel -->
+  <aside class="panel">
+    <div class="pestanas" role="tablist">
+      <button class="act" data-tab="explorar" type="button">Explorar</button>
+      <button data-tab="signos" type="button">Tabla de signos</button>
+      <button data-tab="asintotas" type="button">Asíntotas</button>
+      <button data-tab="plan" type="button">Plan de graficado</button>
+      <button data-tab="teoria" type="button">Teoría</button>
+    </div>
+    <div class="contenido">
+      <!-- ---- Explorar -->
+      <div class="tab act" id="tab-explorar">
+        <div class="form" id="formulas"></div>
+        <div class="nota" id="notaF"></div>
+        <div class="valores">
+          <div class="valor" id="vF"><div class="et">f(x₀)</div><div class="v">–</div></div>
+          <div class="valor" id="vFp"><div class="et">f′(x₀)</div><div class="v">–</div></div>
+          <div class="valor" id="vFpp"><div class="et">f″(x₀)</div><div class="v">–</div></div>
+        </div>
+        <div id="interpretacion"></div>
+        <div class="caja">
+          <h4>Qué observar</h4>
+          <ol style="margin:0;padding-left:18px;font-size:13.5px">
+            <li>Active <b>f′</b> y mueva <b>x₀</b>: donde f′ &gt; 0 la tangente sube y f crece; donde f′ &lt; 0, f decrece. Los <b>cambios de signo de f′</b> son los extremos locales.</li>
+            <li>Active <b>f″</b>: donde f″ &gt; 0 la gráfica queda por encima de la tangente (∪); donde f″ &lt; 0, por debajo (∩). Un <b>cambio de signo de f″</b> con tangente en el punto es una inflexión.</li>
+            <li>Compruebe que f′(x₀)=0 <b>no</b> garantiza extremo y que f″(x₀)=0 <b>no</b> garantiza inflexión (vea los contraejemplos del catálogo).</li>
+            <li>Construya la <b>tabla de signos</b> en la pestaña siguiente y verifíquela antes de revelar.</li>
+          </ol>
+        </div>
+      </div>
+      <!-- ---- Tabla de signos -->
+      <div class="tab" id="tab-signos">
+        <p class="nota">Coloque los puntos de la partición (ceros, puntos singulares, asíntotas verticales y extremos del intervalo) haciendo <b>clic sobre la recta</b>; clic sobre un punto lo elimina. Luego haga clic en cada tramo para asignar el signo (+ / −). El rango de trabajo es el de la vista inicial.</p>
+        <div class="caja">
+          <h4>Signo de f′ &nbsp;<span class="nota" style="display:inline">(monotonía y extremos)</span></h4>
+          <svg class="recta" id="rectaFp"></svg>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <button class="btn primario peq" data-ver="fp" type="button">Verificar</button>
+            <button class="btn peq" data-rev="fp" type="button">Revelar tabla</button>
+            <button class="btn peq" data-lim="fp" type="button">Limpiar</button>
+          </div>
+          <div id="msgFp"></div>
+          <div id="tablaFp"></div>
+        </div>
+        <div class="caja">
+          <h4>Signo de f″ &nbsp;<span class="nota" style="display:inline">(concavidad e inflexión)</span></h4>
+          <svg class="recta" id="rectaFpp"></svg>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <button class="btn primario peq" data-ver="fpp" type="button">Verificar</button>
+            <button class="btn peq" data-rev="fpp" type="button">Revelar tabla</button>
+            <button class="btn peq" data-lim="fpp" type="button">Limpiar</button>
+          </div>
+          <div id="msgFpp"></div>
+          <div id="tablaFpp"></div>
+        </div>
+      </div>
+      <!-- ---- Asíntotas -->
+      <div class="tab" id="tab-asintotas">
+        <p class="nota">Escriba sus conjeturas y verifíquelas. Verticales: valores de <i>x</i> separados por comas (p. ej. <code>-1, 1</code>). Horizontales: valores de <i>y</i>. Oblicuas: ecuaciones <code>y = m x + b</code> (p. ej. <code>x - 1</code>, <code>-x</code>, <code>x/2 + 1</code>). Deje vacío si no hay.</p>
+        <div class="fila2">
+          <label for="asV">Verticales x =</label><input class="campo" id="asV" placeholder="ninguna">
+          <label for="asH">Horizontales y =</label><input class="campo" id="asH" placeholder="ninguna">
+          <label for="asO">Oblicuas y =</label><input class="campo" id="asO" placeholder="ninguna">
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
+          <button class="btn primario peq" id="btnVerAs" type="button">Verificar</button>
+          <button class="btn peq" id="btnRevAs" type="button">Revelar asíntotas</button>
+        </div>
+        <div id="msgAs"></div>
+        <div id="solAs"></div>
+        <div class="caja">
+          <h4>Recordatorio</h4>
+          <ul style="margin:0;padding-left:18px;font-size:13.5px">
+            <li><b>Vertical</b> \(x=a\): algún límite lateral en \(a\) es \(\pm\infty\). Estudie los <i>dos</i> lados.</li>
+            <li><b>Horizontal</b> \(y=L\): \(\lim_{x\to\infty}f=L\) o \(\lim_{x\to-\infty}f=L\); puede haber dos distintas y la gráfica puede cruzarla.</li>
+            <li><b>Oblicua</b> \(y=mx+b\), \(m\neq0\): \(m=\lim \frac{f(x)}{x}\), \(b=\lim (f(x)-mx)\), por separado en \(+\infty\) y en \(-\infty\).</li>
+          </ul>
+        </div>
+      </div>
+      <!-- ---- Plan -->
+      <div class="tab" id="tab-plan">
+        <p class="nota">Recorra los seis pasos del <b>plan de graficado</b>. Escriba primero su respuesta en papel y solo después revele la solución de cada paso.</p>
+        <div id="plan"></div>
+        <button class="btn primario" id="btnTodo" type="button" style="margin-top:6px">Mostrar todo en la gráfica</button>
+      </div>
+      <!-- ---- Teoría -->
+      <div class="tab teoria" id="tab-teoria">
+        <h3>1. Extremos y candidatos</h3>
+        <div class="def"><b>Definición.</b> \(f\) tiene un <b>máximo local</b> en \(x_0\) si existe \(\delta&gt;0\) tal que \(f(x)\le f(x_0)\) para todo \(x\) del dominio con \(|x-x_0|&lt;\delta\) (mínimo local: \(\ge\)). Es <b>absoluto</b> si la desigualdad vale en todo el dominio.</div>
+        <div class="def"><b>Candidatos.</b> \(x_0\) es un <b>número crítico</b> si \(f'(x_0)=0\); es un <b>punto singular</b> si \(f'(x_0)\) no existe; los <b>extremos del intervalo</b> también son candidatos.</div>
+        <div class="teo"><b>Teorema de Fermat.</b> Si \(f\) tiene un extremo local en \(x_0\) y \(f'(x_0)\) existe, entonces \(f'(x_0)=0\).<br><b>El recíproco es falso:</b> \(x^3\) cumple \(f'(0)=0\) y no tiene extremo en \(0\). Todo candidato debe someterse a prueba.</div>
+        <div class="teo"><b>Criterio de la primera derivada.</b> Sea \(f\) <b>continua en \(x_0\)</b> y derivable cerca de \(x_0\) (salvo quizá en \(x_0\)). Si \(f'\) pasa de \(+\) a \(-\) al cruzar \(x_0\), hay máximo local; de \(-\) a \(+\), mínimo local; si no cambia de signo, no hay extremo. En un extremo del intervalo solo cuenta el signo de \(f'\) del lado interior.</div>
+        <h3>2. Extremos absolutos</h3>
+        <div class="teo"><b>Weierstrass.</b> Si \(f\) es continua en \([a,b]\), tiene máximo y mínimo absolutos; se hallan comparando \(f\) en críticos, singulares y en \(a\) y \(b\).</div>
+        <div class="teo"><b>Intervalos abiertos.</b> Si \(f\) es continua en \((a,b)\), \(\lim_{x\to a^+}f=L\) y \(\lim_{x\to b^-}f=M\) (finitos o infinitos): si existe \(u\) con \(f(u)&gt;L\) y \(f(u)&gt;M\), hay máximo absoluto; si existe \(v\) con \(f(v)&lt;L\) y \(f(v)&lt;M\), hay mínimo absoluto, y están en críticos o singulares.</div>
+        <div class="ojo"><b>Puede no haber extremos:</b> \(x\) en \((0,1)\); \(1/x\) en \((0,\infty)\); \(x+\operatorname{sen}x\) en \(\mathbb R\). Un supremo no alcanzado (como \(1\) para \(\frac{x^2}{x^2+1}\)) <b>no</b> es un máximo.</div>
+        <h3>3. Segunda derivada</h3>
+        <div class="teo"><b>Criterio de la segunda derivada.</b> Si \(f'(x_0)=0\) y \(f''\) es continua cerca de \(x_0\): \(f''(x_0)&lt;0\Rightarrow\) máximo local; \(f''(x_0)&gt;0\Rightarrow\) mínimo local; \(f''(x_0)=0\Rightarrow\) <b>no se concluye</b> (\(x^4\), \(-x^4\) y \(x^3\) tienen \(f'(0)=f''(0)=0\) y son mínimo, máximo e inflexión).</div>
+        <div class="def"><b>Concavidad.</b> \(f\) es cóncava hacia arriba (\(\cup\)) en un intervalo si \(f'\) es creciente allí; hacia abajo (\(\cap\)) si \(f'\) es decreciente. Si \(f''&gt;0\) en el intervalo es \(\cup\); si \(f''&lt;0\), \(\cap\). En \(\cup\) la gráfica queda por encima de sus tangentes; en \(\cap\), por debajo.</div>
+        <div class="def"><b>Punto de inflexión.</b> \((x_0,f(x_0))\) es punto de inflexión si la gráfica tiene tangente allí (quizá vertical) <b>y</b> la concavidad cambia al cruzar \(x_0\). Si existe \(f''(x_0)\), entonces \(f''(x_0)=0\).</div>
+        <div class="ojo"><b>Tres errores.</b> (1) «\(f''(c)=0\), luego hay inflexión»: falso (\(x^4\)). (2) «No existe \(f''(c)\), luego no hay inflexión»: falso (\(\sqrt[3]{x}\) en \(0\), tangente vertical). (3) «Cambia la concavidad, luego hay inflexión»: falso si no hay tangente en el punto (una esquina, como \(|x^2-1|\) en \(\pm1\)).</div>
+        <h3>4. Asíntotas</h3>
+        <div class="def"><b>Vertical</b> \(x=a\): \(\lim_{x\to a^-}f=\pm\infty\) o \(\lim_{x\to a^+}f=\pm\infty\). <b>Horizontal</b> \(y=L\): \(\lim_{x\to\infty}f=L\) o \(\lim_{x\to-\infty}f=L\). <b>Oblicua</b> \(y=mx+b\) (\(m\ne0\)): \(\lim_{x\to\pm\infty}\big(f(x)-mx-b\big)=0\).</div>
+        <div class="teo"><b>Racionales</b> \(f=P_m/Q_n\) sin factores comunes: vertical en cada cero de \(Q_n\); \(m&lt;n\): horizontal \(y=0\); \(m=n\): horizontal \(y=\) cociente de coeficientes principales; \(m=n+1\): oblicua igual al cociente de la división; \(m&gt;n+1\): ninguna.</div>
+        <h3>5. Plan de graficado</h3>
+        <ol>
+          <li>Calcule \(f'\) y \(f''\) <b>factorizadas</b>.</li>
+          <li>De \(f\): dominio, simetrías, cortes, un punto por componente.</li>
+          <li>Asíntotas: verticales (con límites laterales), horizontales, oblicuas.</li>
+          <li>Tabla de signos de \(f'\): críticos, singulares, extremos; monotonía y extremos locales.</li>
+          <li>Tabla de signos de \(f''\): concavidad e inflexiones.</li>
+          <li>Trazado: asíntotas, puntos clave, piezas. <b>Revise la coherencia</b>: una curva que va a \(+\infty\) por una asíntota vertical \(x=a\) por la izquierda no puede ser decreciente ni cóncava hacia abajo cerca de \(a\).</li>
+        </ol>
+      </div>
+    </div>
+  </aside>
+</main>
+<footer>Cálculo I (20252) · Escuela de Matemáticas · Universidad Industrial de Santander · Prof. Jorge A. Rojas G. — Diseño del laboratorio con asistencia de IA (Claude, Anthropic) bajo supervisión del docente. Ejercicios tomados de la <i>Miscelánea de aplicaciones de la derivada</i>, capítulo 3.</footer>
+
+<div id="ayuda" class="oculto" style="position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:50;display:flex;align-items:center;justify-content:center;padding:20px">
+  <div style="background:#fff;border-radius:12px;max-width:720px;max-height:90vh;overflow:auto;padding:20px 24px;box-shadow:0 10px 40px rgba(0,0,0,.3)">
+    <h2 style="color:var(--verde);font-size:18px">Cómo usar el laboratorio</h2>
+    <ol style="font-size:14.5px;padding-left:20px">
+      <li><b>Elija una función</b> del catálogo (numerada como en la miscelánea) o escriba la suya en «Modo libre».</li>
+      <li>En <b>Explorar</b>, mueva \(x_0\) con el deslizador o con un clic en la gráfica. Lea \(f(x_0)\), \(f'(x_0)\), \(f''(x_0)\) y su interpretación. Active las capas \(f'\) y \(f''\) para ver cómo sus signos predicen la forma de \(f\).</li>
+      <li>En <b>Tabla de signos</b>, construya usted mismo la partición y los signos de \(f'\) y de \(f''\); verifique y solo después revele.</li>
+      <li>En <b>Asíntotas</b>, escriba sus conjeturas y verifíquelas.</li>
+      <li>En <b>Plan de graficado</b>, complete los seis pasos del estudio completo (en papel) y compare con la solución.</li>
+      <li>La pestaña <b>Teoría</b> contiene las definiciones y teoremas exactos que se evalúan en el cuestionario de Moodle.</li>
+    </ol>
+    <p class="nota">Gestos: arrastre para desplazar la vista, rueda del ratón para acercar/alejar, «Restablecer» vuelve a la vista inicial. En el cuestionario de Moodle cada pregunta enlaza la función correspondiente con <code>?f=número</code>.</p>
+    <div style="text-align:right"><button class="btn primario" id="btnCerrarAyuda" type="button">Entendido</button></div>
+  </div>
+</div>
+
+<script>
+/* ==================================================================== datos */
+const CATALOGO = {"grupos":{"extremos":"Extremos locales, críticos y monotonía","absolutos":"Extremos absolutos (intervalos cerrados y abiertos)","concavidad":"Segunda derivada, concavidad e inflexión","asintotas":"Asíntotas","graficado":"Graficado completo (ej. 176–186)","contra":"Contraejemplos clásicos"},"items":[{"id":"117","alias":"Ej. 117","grupo":"extremos","nivel":"B","tex":{"f":"x^{3}-3x-2","fp":"3x^{2}-3=3(x-1)(x+1)","fpp":"6x"},"js":{"f":"(x*x*x) - 3*x - 2","fp":"3*(x*x) - 3","fpp":"6*x"},"dom":{"ints":[[null,null]],"closed":[[false,false]],"excl":[],"tex":"\\mathbb{R}"},"sing":[],"vtan":[],"view":[-3,3,-6,4],"signs":{"fp":{"pts":[-1.0,1.0],"ptex":["-1","1"],"kinds":["crit","crit"],"s":["+","-","+"]},"fpp":{"pts":[0.0],"ptex":["0"],"kinds":["cero"],"s":["-","+"]}},"crit":[{"x":-1.0,"xtex":"-1","y":0.0,"ytex":"0","kind":"crit","type":"max"},{"x":1.0,"xtex":"1","y":-4.0,"ytex":"-4","kind":"crit","type":"min"}],"infl":[{"x":0.0,"xtex":"0","y":-2.0,"ytex":"-2","htan":false,"vtan":false}],"asym":{"v":[],"h":[],"o":[]},"sym":null,"cuts":{"y":-2.0,"ytex":"-2","x":[{"x":-1.0,"xtex":"-1"},{"x":2.0,"xtex":"2"}]},"nota":null},{"id":"118","alias":"Ej. 118","grupo":"extremos","nivel":"B","tex":{"f":"(x^{2}-4)^{2}","fp":"4x(x-2)(x+2)","fpp":"4(3x^{2}-4)"},"js":{"f":"Math.pow((x*x) - 4,2)","fp":"4*x*((x*x) - 4)","fpp":"12*(x*x) - 16"},"dom":{"ints":[[null,null]],"closed":[[false,false]],"excl":[],"tex":"\\mathbb{R}"},"sing":[],"vtan":[],"view":[-3.5,3.5,-4,22],"signs":{"fp":{"pts":[-2.0,0.0,2.0],"ptex":["-2","0","2"],"kinds":["crit","crit","crit"],"s":["-","+","-","+"]},"fpp":{"pts":[-1.15470053838,1.15470053838],"ptex":["- \\frac{2 \\sqrt{3}}{3}","\\frac{2 \\sqrt{3}}{3}"],"kinds":["cero","cero"],"s":["+","-","+"]}},"crit":[{"x":-2.0,"xtex":"-2","y":0.0,"ytex":"0","kind":"crit","type":"min"},{"x":0.0,"xtex":"0","y":16.0,"ytex":"16","kind":"crit","type":"max"},{"x":2.0,"xtex":"2","y":0.0,"ytex":"0","kind":"crit","type":"min"}],"infl":[{"x":-1.15470053838,"xtex":"- \\frac{2 \\sqrt{3}}{3}","y":7.11111111111,"ytex":"\\frac{64}{9}","htan":false,"vtan":false},{"x":1.15470053838,"xtex":"\\frac{2 \\sqrt{3}}{3}","y":7.11111111111,"ytex":"\\frac{64}{9}","htan":false,"vtan":false}],"asym":{"v":[],"h":[],"o":[]},"sym":"par","cuts":{"y":16.0,"ytex":"16","x":[{"x":-2.0,"xtex":"-2"},{"x":2.0,"xtex":"2"}]},"nota":null},{"id":"119","alias":"Ej. 119","grupo":"extremos","nivel":"I","tex":{"f":"x^{3}(x-1)^{2}","fp":"x^{2}(x-1)(5x-3)","fpp":"2x(10x^{2}-12x+3)"},"js":{"f":"(x*x*x)*Math.pow(x - 1,2)","fp":"(x*x)*(x - 1)*(5*x - 3)","fpp":"2*x*(10*(x*x) - 12*x + 3)"},"dom":{"ints":[[null,null]],"closed":[[false,false]],"excl":[],"tex":"\\mathbb{R}"},"sing":[],"vtan":[],"view":[-0.6,1.5,-0.12,0.12],"signs":{"fp":{"pts":[0.0,0.6,1.0],"ptex":["0","\\frac{3}{5}","1"],"kinds":["crit","crit","crit"],"s":["+","+","-","+"]},"fpp":{"pts":[0.0,0.355051025722,0.844948974278],"ptex":["0","0.3551","0.8449"],"kinds":["cero","cero","cero"],"s":["-","+","-","+"]}},"crit":[{"x":0.0,"xtex":"0","y":0.0,"ytex":"0","kind":"crit","type":"none","infl":true},{"x":0.6,"xtex":"\\frac{3}{5}","y":0.03456,"ytex":"\\frac{108}{3125}","kind":"crit","type":"max"},{"x":1.0,"xtex":"1","y":0.0,"ytex":"0","kind":"crit","type":"min"}],"infl":[{"x":0.0,"xtex":"0","y":0.0,"ytex":"0","htan":true,"vtan":false},{"x":0.355051025722,"xtex":"0.3551","y":0.0186175713839,"ytex":"0.0186","htan":false,"vtan":false},{"x":0.844948974278,"xtex":"0.8449","y":0.0145024286161,"ytex":"0.0145","htan":false,"vtan":false}],"asym":{"v":[],"h":[],"o":[]},"sym":null,"cuts":{"y":0.0,"ytex":"0","x":[{"x":0.0,"xtex":"0"},{"x":1.0,"xtex":"1"}]},"nota":null},{"id":"120","alias":"Ej. 120","grupo":"extremos","nivel":"I","tex":{"f":"x^{2}(x-1)^{2}","fp":"2x(x-1)(2x-1)","fpp":"2(6x^{2}-6x+1)"},"js":{"f":"(x*x)*Math.pow(x - 1,2)","fp":"2*x*(x - 1)*(2*x - 1)","fpp":"12*(x*x) - 12*x + 2"},"dom":{"ints":[[null,null]],"closed":[[false,false]],"excl":[],"tex":"\\mathbb{R}"},"sing":[],"vtan":[],"view":[-0.6,1.6,-0.05,0.25],"signs":{"fp":{"pts":[0.0,0.5,1.0],"ptex":["0","\\frac{1}{2}","1"],"kinds":["crit","crit","crit"],"s":["-","+","-","+"]},"fpp":{"pts":[0.211324865405,0.788675134595],"ptex":["0.2113","0.7887"],"kinds":["cero","cero"],"s":["+","-","+"]}},"crit":[{"x":0.0,"xtex":"0","y":0.0,"ytex":"0","kind":"crit","type":"min"},{"x":0.5,"xtex":"\\frac{1}{2}","y":0.0625,"ytex":"\\frac{1}{16}","kind":"crit","type":"max"},{"x":1.0,"xtex":"1","y":0.0,"ytex":"0","kind":"crit","type":"min"}],"infl":[{"x":0.211324865405,"xtex":"0.2113","y":0.0277777777778,"ytex":"\\frac{1}{36}","htan":false,"vtan":false},{"x":0.788675134595,"xtex":"0.7887","y":0.0277777777778,"ytex":"\\frac{1}{36}","htan":false,"vtan":false}],"asym":{"v":[],"h":[],"o":[]},"sym":null,"cuts":{"y":0.0,"ytex":"0","x":[{"x":0.0,"xtex":"0"},{"x":1.0,"xtex":"1"}]},"nota":null},{"id":"121","alias":"Ej. 121","grupo":"extremos","nivel":"A","tex":{"f":"x(x^{2}-1)^{2}","fp":"(x^{2}-1)(5x^{2}-1)","fpp":"4x(5x^{2}-3)"},"js":{"f":"x*Math.pow((x*x) - 1,2)","fp":"((x*x) - 1)*(5*(x*x) - 1)","fpp":"20*(x*x*x) - 12*x"},"dom":{"ints":[[null,null]],"closed":[[false,false]],"excl":[],"tex":"\\mathbb{R}"},"sing":[],"vtan":[],"view":[-1.6,1.6,-0.6,0.6],"signs":{"fp":{"pts":[-1.0,-0.4472135955,0.4472135955,1.0],"ptex":["-1","- \\frac{\\sqrt{5}}{5}","\\frac{\\sqrt{5}}{5}","1"],"kinds":["crit","crit","crit","crit"],"s":["+","-","+","-","+"]},"fpp":{"pts":[-0.774596669241,0.0,0.774596669241],"ptex":["-0.7746","0","0.7746"],"kinds":["cero","cero","cero"],"s":["-","+","-","+"]}},"crit":[{"x":-1.0,"xtex":"-1","y":-0.0,"ytex":"0","kind":"crit","type":"max"},{"x":-0.4472135955,"xtex":"- \\frac{\\sqrt{5}}{5}","y":-0.28621670112,"ytex":"- \\frac{16 \\sqrt{5}}{125}","kind":"crit","type":"min"},{"x":0.4472135955,"xtex":"\\frac{\\sqrt{5}}{5}","y":0.28621670112,"ytex":"\\frac{16 \\sqrt{5}}{125}","kind":"crit","type":"max"},{"x":1.0,"xtex":"1","y":0.0,"ytex":"0","kind":"crit","type":"min"}],"infl":[{"x":-0.774596669241,"xtex":"-0.7746","y":-0.123935467079,"ytex":"-0.1239","htan":false,"vtan":false},{"x":0.0,"xtex":"0","y":0.0,"ytex":"0","htan":false,"vtan":false},{"x":0.774596669241,"xtex":"0.7746","y":0.123935467079,"ytex":"0.1239","htan":false,"vtan":false}],"asym":{"v":[],"h":[],"o":[]},"sym":"impar","cuts":{"y":0.0,"ytex":"0","x":[{"x":-1.0,"xtex":"-1"},{"x":0.0,"xtex":"0"},{"x":1.0,"xtex":"1"}]},"nota":null},{"id":"122","alias":"Ej. 122","grupo":"extremos","nivel":"I","tex":{"f":"\\dfrac{x}{x^{2}+1}","fp":"\\dfrac{1-x^{2}}{(x^{2}+1)^{2}}","fpp":"\\dfrac{2x(x^{2}-3)}{(x^{2}+1)^{3}}"},"js":{"f":"x/((x*x) + 1)","fp":"(1 - (x*x))/(Math.pow(x,4) + 2*(x*x) + 1)","fpp":"2*x*((x*x) - 3)/Math.pow((x*x) + 1,3)"},"dom":{"ints":[[null,null]],"closed":[[false,false]],"excl":[],"tex":"\\mathbb{R}"},"sing":[],"vtan":[],"view":[-5,5,-0.8,0.8],"signs":{"fp":{"pts":[-1.0,1.0],"ptex":["-1","1"],"kinds":["crit","crit"],"s":["-","+","-"]},"fpp":{"pts":[-1.73205080757,0.0,1.73205080757],"ptex":["- \\sqrt{3}","0","\\sqrt{3}"],"kinds":["cero","cero","cero"],"s":["-","+","-","+"]}},"crit":[{"x":-1.0,"xtex":"-1","y":-0.5,"ytex":"- \\frac{1}{2}","kind":"crit","type":"min"},{"x":1.0,"xtex":"1","y":0.5,"ytex":"\\frac{1}{2}","kind":"crit","type":"max"}],"infl":[{"x":-1.73205080757,"xtex":"- \\sqrt{3}","y":-0.433012701892,"ytex":"- \\frac{\\sqrt{3}}{4}","htan":false,"vtan":false},{"x":0.0,"xtex":"0","y":0.0,"ytex":"0","htan":false,"vtan":false},{"x":1.73205080757,"xtex":"\\sqrt{3}","y":0.433012701892,"ytex":"\\frac{\\sqrt{3}}{4}","htan":false,"vtan":false}],"asym":{"v":[],"h":[{"y":0.0,"ytex":"0","side":"left"},{"y":0.0,"ytex":"0","side":"right"}],"o":[]},"sym":"impar","cuts":{"y":0.0,"ytex":"0","x":[{"x":0.0,"xtex":"0"}]},"nota":null},{"id":"123","alias":"Ej. 123","grupo":"extremos","nivel":"I","tex":{"f":"\\dfrac{x^{2}}{x^{2}+1}","fp":"\\dfrac{2x}{(x^{2}+1)^{2}}","fpp":"\\dfrac{2(1-3x^{2})}{(x^{2}+1)^{3}}"},"js":{"f":"(x*x)/((x*x) + 1)","fp":"2*x/(Math.pow(x,4) + 2*(x*x) + 1)","fpp":"2*(1 - 3*(x*x))/(Math.pow(x,6) + 3*Math.pow(x,4) + 3*(x*x) + 1)"},"dom":{"ints":[[null,null]],"closed":[[false,false]],"excl":[],"tex":"\\mathbb{R}"},"sing":[],"vtan":[],"view":[-5,5,-0.3,1.3],"signs":{"fp":{"pts":[0.0],"ptex":["0"],"kinds":["crit"],"s":["-","+"]},"fpp":{"pts":[-0.57735026919,0.57735026919],"ptex":["- \\frac{\\sqrt{3}}{3}","\\frac{\\sqrt{3}}{3}"],"kinds":["cero","cero"],"s":["-","+","-"]}},"crit":[{"x":0.0,"xtex":"0","y":0.0,"ytex":"0","kind":"crit","type":"min"}],"infl":[{"x":-0.57735026919,"xtex":"- \\frac{\\sqrt{3}}{3}","y":0.25,"ytex":"\\frac{1}{4}","htan":false,"vtan":false},{"x":0.57735026919,"xtex":"\\frac{\\sqrt{3}}{3}","y":0.25,"ytex":"\\frac{1}{4}","htan":false,"vtan":false}],"asym":{"v":[],"h":[{"y":1.0,"ytex":"1","side":"left"},{"y":1.0,"ytex":"1","side":"right"}],"o":[]},"sym":"par","cuts":{"y":0.0,"ytex":"0","x":[{"x":0.0,"xtex":"0"}]},"nota":null},{"id":"125","alias":"Ej. 125","grupo":"extremos","nivel":"I","tex":{"f":"x+\\operatorname{sen}x","fp":"1+\\cos x","fpp":"-\\operatorname{sen}x"},"js":{"f":"x + Math.sin(x)","fp":"Math.cos(x) + 1","fpp":"-Math.sin(x)"},"dom":{"ints":[[null,null]],"closed":[[false,false]],"excl":[],"tex":"\\mathbb{R}"},"sing":[],"vtan":[],"view":[-8,8,-8,8],"signs":{"fp":{"pts":[-3.1415926536,3.14159265358],"ptex":["- \\pi","\\pi"],"kinds":["crit","crit"],"s":["+","+","+"]},"fpp":{"pts":[-6.28318530718,-3.14159265359,0.0,3.14159265359,6.28318530718],"ptex":["- 2 \\pi","- \\pi","0","\\pi","2 \\pi"],"kinds":["cero","cero","cero","cero","cero"],"s":["…","-","+","-","+","…"]}},"crit":[{"x":-3.1415926536,"xtex":"- \\pi","y":-3.14159265359,"ytex":"- \\pi","kind":"crit","type":"none","infl":true},{"x":3.14159265358,"xtex":"\\pi","y":3.14159265359,"ytex":"\\pi","kind":"crit","type":"none","infl":true}],"infl":[{"x":-3.14159265359,"xtex":"- \\pi","y":-3.14159265359,"ytex":"- \\pi","htan":true,"vtan":false},{"x":0.0,"xtex":"0","y":0.0,"ytex":"0","htan":false,"vtan":false},{"x":3.14159265359,"xtex":"\\pi","y":3.14159265359,"ytex":"\\pi","htan":true,"vtan":false}],"asym":{"v":[],"h":[],"o":[]},"sym":"impar","cuts":{"y":0.0,"ytex":"0","x":[{"x":0.0,"xtex":"0"}]},"nota":null},{"id":"126","alias":"Ej. 126","grupo":"extremos","nivel":"I","tex":{"f":"x-2\\operatorname{sen}x","fp":"1-2\\cos x","fpp":"2\\operatorname{sen}x"},"js":{"f":"x - 2*Math.sin(x)","fp":"1 - 2*Math.cos(x)","fpp":"2*Math.sin(x)"},"dom":{"ints":[[null,null]],"closed":[[false,false]],"excl":[],"tex":"\\mathbb{R}"},"sing":[],"vtan":[],"view":[-8,8,-8,8],"signs":{"fp":{"pts":[-7.33038285838,-5.23598775598,-1.0471975512,1.0471975512,5.23598775598,7.33038285838],"ptex":["- \\frac{7 \\pi}{3}","- \\frac{5 \\pi}{3}","- \\frac{\\pi}{3}","\\frac{\\pi}{3}","\\frac{5 \\pi}{3}","\\frac{7 \\pi}{3}"],"kinds":["crit","crit","crit","crit","crit","crit"],"s":["+","-","+","-","+","-","+"]},"fpp":{"pts":[-6.28318530718,-3.14159265359,0.0,3.14159265359,6.28318530718],"ptex":["- 2 \\pi","- \\pi","0","\\pi","2 \\pi"],"kinds":["cero","cero","cero","cero","cero"],"s":["…","+","-","+","-","…"]}},"crit":[{"x":-7.33038285838,"xtex":"- \\frac{7 \\pi}{3}","y":-5.59833205081,"ytex":"- \\frac{7 \\pi}{3} + \\sqrt{3}","kind":"crit","type":"max"},{"x":-5.23598775598,"xtex":"- \\frac{5 \\pi}{3}","y":-6.96803856355,"ytex":"- \\frac{5 \\pi}{3} - \\sqrt{3}","kind":"crit","type":"min"},{"x":-1.0471975512,"xtex":"- \\frac{\\pi}{3}","y":0.684853256372,"ytex":"- \\frac{\\pi}{3} + \\sqrt{3}","kind":"crit","type":"max"},{"x":1.0471975512,"xtex":"\\frac{\\pi}{3}","y":-0.684853256372,"ytex":"- \\sqrt{3} + \\frac{\\pi}{3}","kind":"crit","type":"min"},{"x":5.23598775598,"xtex":"\\frac{5 \\pi}{3}","y":6.96803856355,"ytex":"\\sqrt{3} + \\frac{5 \\pi}{3}","kind":"crit","type":"max"},{"x":7.33038285838,"xtex":"\\frac{7 \\pi}{3}","y":5.59833205081,"ytex":"- \\sqrt{3} + \\frac{7 \\pi}{3}","kind":"crit","type":"min"}],"infl":[{"x":-3.14159265359,"xtex":"- \\pi","y":-3.14159265359,"ytex":"- \\pi","htan":false,"vtan":false},{"x":0.0,"xtex":"0","y":0.0,"ytex":"0","htan":false,"vtan":false},{"x":3.14159265359,"xtex":"\\pi","y":3.14159265359,"ytex":"\\pi","htan":false,"vtan":false}],"asym":{"v":[],"h":[],"o":[]},"sym":"impar","cuts":{"y":0.0,"ytex":"0","x":[{"x":-1.89549426703,"xtex":"-1.8955"},{"x":0.0,"xtex":"0"},{"x":1.89549426703,"xtex":"1.8955"}]},"nota":null},{"id":"127","alias":"Ej. 127","grupo":"extremos","nivel":"I","tex":{"f":"x-2\\arctan x","fp":"\\dfrac{x^{2}-1}{x^{2}+1}","fpp":"\\dfrac{4x}{(x^{2}+1)^{2}}"},"js":{"f":"x - 2*Math.atan(x)","fp":"((x*x) - 1)/((x*x) + 1)","fpp":"4*x/Math.pow((x*x) + 1,2)"},"dom":{"ints":[[null,null]],"closed":[[false,false]],"excl":[],"tex":"\\mathbb{R}"},"sing":[],"vtan":[],"view":[-5,5,-3,3],"signs":{"fp":{"pts":[-1.0,1.0],"ptex":["-1","1"],"kinds":["crit","crit"],"s":["+","-","+"]},"fpp":{"pts":[0.0],"ptex":["0"],"kinds":["cero"],"s":["-","+"]}},"crit":[{"x":-1.0,"xtex":"-1","y":0.570796326795,"ytex":"-1 + \\frac{\\pi}{2}","kind":"crit","type":"max"},{"x":1.0,"xtex":"1","y":-0.570796326795,"ytex":"1 - \\frac{\\pi}{2}","kind":"crit","type":"min"}],"infl":[{"x":0.0,"xtex":"0","y":0.0,"ytex":"0","htan":false,"vtan":false}],"asym":{"v":[],"h":[],"o":[{"m":1.0,"b":3.141592653589793,"mtex":"1","btex":"\\pi","side":"left"},{"m":1.0,"b":-3.141592653589793,"mtex":"1","btex":"- \\pi","side":"right"}]},"sym":"impar","cuts":{"y":0.0,"ytex":"0","x":[{"x":-2.33112237041,"xtex":"-2.3311"},{"x":0.0,"xtex":"0"},{"x":2.33112237041,"xtex":"2.3311"}]},"nota":null},{"id":"129","alias":"Ej. 129","grupo":"extremos","nivel":"I","tex":{"f":"x^{2}e^{-x^{2}}","fp":"2x(1-x^{2})e^{-x^{2}}","fpp":"2(2x^{4}-5x^{2}+1)e^{-x^{2}}"},"js":{"f":"(x*x)*Math.exp(-(x*x))","fp":"2*x*(1 - (x*x))*Math.exp(-(x*x))","fpp":"2*(2*Math.pow(x,4) - 5*(x*x) + 1)*Math.exp(-(x*x))"},"dom":{"ints":[[null,null]],"closed":[[false,false]],"excl":[],"tex":"\\mathbb{R}"},"sing":[],"vtan":[],"view":[-3,3,-0.1,0.5],"signs":{"fp":{"pts":[-1.0,0.0,1.0],"ptex":["-1","0","1"],"kinds":["crit","crit","crit"],"s":["+","-","+","-"]},"fpp":{"pts":[-1.51022395902,-0.468213192462,0.468213192462,1.51022395902],"ptex":["-1.5102","-0.4682","0.4682","1.5102"],"kinds":["cero","cero","cero","cero"],"s":["+","-","+","-","+"]}},"crit":[{"x":-1.0,"xtex":"-1","y":0.367879441171,"ytex":"e^{-1}","kind":"crit","type":"max"},{"x":0.0,"xtex":"0","y":0.0,"ytex":"0","kind":"crit","type":"min"},{"x":1.0,"xtex":"1","y":0.367879441171,"ytex":"e^{-1}","kind":"crit","type":"max"}],"infl":[{"x":-1.51022395902,"xtex":"-1.5102","y":0.233106349884,"ytex":"0.2331","htan":false,"vtan":false},{"x":-0.468213192462,"xtex":"-0.4682","y":0.176067701855,"ytex":"0.1761","htan":false,"vtan":false},{"x":0.468213192462,"xtex":"0.4682","y":0.176067701855,"ytex":"0.1761","htan":false,"vtan":false},{"x":1.51022395902,"xtex":"1.5102","y":0.233106349884,"ytex":"0.2331","htan":false,"vtan":false}],"asym":{"v":[],"h":[{"y":0.0,"ytex":"0","side":"left"},{"y":0.0,"ytex":"0","side":"right"}],"o":[]},"sym":"par","cuts":{"y":0.0,"ytex":"0","x":[{"x":0.0,"xtex":"0"}]},"nota":null},{"id":"130","alias":"130 / 184","grupo":"extremos","nivel":"I","tex":{"f":"\\dfrac{\\ln x}{x}","fp":"\\dfrac{1-\\ln x}{x^{2}}","fpp":"\\dfrac{2\\ln x-3}{x^{3}}"},"js":{"f":"Math.log(x)/x","fp":"(1 - Math.log(x))/(x*x)","fpp":"(2*Math.log(x) - 3)/(x*x*x)"},"dom":{"ints":[[0,null]],"closed":[[false,false]],"excl":[],"tex":"(0,\\infty)"},"sing":[],"vtan":[],"view":[-0.5,9,-2,0.8],"signs":{"fp":{"pts":[0.0,2.71828182846],"ptex":["0","e"],"kinds":["asint","crit"],"s":["∅","+","-"]},"fpp":{"pts":[0.0,4.48168907034],"ptex":["0","e^{\\frac{3}{2}}"],"kinds":["asint","cero"],"s":["∅","-","+"]}},"crit":[{"x":2.71828182846,"xtex":"e","y":0.367879441171,"ytex":"e^{-1}","kind":"crit","type":"max"}],"infl":[{"x":4.48168907034,"xtex":"e^{\\frac{3}{2}}","y":0.334695240223,"ytex":"\\frac{3}{2 e^{\\frac{3}{2}}}","htan":false,"vtan":false}],"asym":{"v":[{"x":0.0,"xtex":"0","left":null,"right":"-inf"}],"h":[{"y":0.0,"ytex":"0","side":"right"}],"o":[]},"sym":null,"cuts":{"y":null,"ytex":null,"x":[{"x":1.0,"xtex":"1"}]},"nota":null},{"id":"131","alias":"Ej. 131","grupo":"extremos","nivel":"I","tex":{"f":"\\lvert x^{2}-1\\rvert","fp":"2x\\,\\operatorname{sgn}(x^{2}-1)\\quad(x\\ne\\pm1)","fpp":"2\\,\\operatorname{sgn}(x^{2}-1)\\quad(x\\ne\\pm1)"},"js":{"f":"Math.abs(x*x-1)","fp":"2*x*Math.sign(x*x-1)","fpp":"2*Math.sign(x*x-1)"},"dom":{"ints":[[null,null]],"closed":[[false,false]],"excl":[],"tex":"\\mathbb{R}"},"sing":[-1,1],"vtan":[],"view":[-2.5,2.5,-0.5,3.5],"signs":{"fp":{"pts":[-1.0,0.0,1.0],"ptex":["-1","0","1"],"kinds":["sing","crit","sing"],"s":["-","+","-","+"]},"fpp":{"pts":[-1.0,1.0],"ptex":["-1","1"],"kinds":["sing","sing"],"s":["+","-","+"]}},"crit":[{"x":-1.0,"xtex":"-1","y":0.0,"ytex":"0","kind":"sing","type":"min"},{"x":0.0,"xtex":"0","y":1.0,"ytex":"1","kind":"crit","type":"max"},{"x":1.0,"xtex":"1","y":0.0,"ytex":"0","kind":"sing","type":"min"}],"infl":[],"asym":{"v":[],"h":[],"o":[]},"sym":"par","cuts":{"y":1.0,"ytex":"1","x":[]},"nota":null},{"id":"133","alias":"133 / 142","grupo":"extremos","nivel":"I","tex":{"f":"2x^{3}-3x^{2}-12x+5","fp":"6(x-2)(x+1)","fpp":"6(2x-1)"},"js":{"f":"2*(x*x*x) - 3*(x*x) - 12*x + 5","fp":"6*(x*x) - 6*x - 12","fpp":"12*x - 6"},"dom":{"ints":[[null,null]],"closed":[[false,false]],"excl":[],"tex":"\\mathbb{R}"},"sing":[],"vtan":[],"view":[-3.5,4,-40,25],"signs":{"fp":{"pts":[-1.0,2.0],"ptex":["-1","2"],"kinds":["crit","crit"],"s":["+","-","+"]},"fpp":{"pts":[0.5],"ptex":["\\frac{1}{2}"],"kinds":["cero"],"s":["-","+"]}},"crit":[{"x":-1.0,"xtex":"-1","y":12.0,"ytex":"12","kind":"crit","type":"max"},{"x":2.0,"xtex":"2","y":-15.0,"ytex":"-15","kind":"crit","type":"min"}],"infl":[{"x":0.5,"xtex":"\\frac{1}{2}","y":-1.5,"ytex":"- \\frac{3}{2}","htan":false,"vtan":false}],"asym":{"v":[],"h":[],"o":[]},"sym":null,"cuts":{"y":5.0,"ytex":"5","x":[{"x":-2.04062936195,"xtex":"-2.0406"},{"x":0.388684544541,"xtex":"0.3887"},{"x":3.15194481741,"xtex":"3.1519"}]},"nota":null},{"id":"135","alias":"Ej. 135","grupo":"extremos","nivel":"A","tex":{"f":"\\frac{x^{7}}{7} + \\frac{x^{6}}{6} - \\frac{11 x^{5}}{5} - \\frac{13 x^{4}}{4} + \\frac{26 x^{3}}{3} + 10 x^{2} - 24 x","fp":"(x-1)^{2}(x+2)^{3}(x-3)","fpp":"(x-1)(x+2)^{2}(2x-5)(3x+1)"},"js":{"f":"(1/7)*Math.pow(x,7) + (1/6)*Math.pow(x,6) - 11/5*Math.pow(x,5) - 13/4*Math.pow(x,4) + (26/3)*(x*x*x) + 10*(x*x) - 24*x","fp":"(x - 3)*Math.pow(x - 1,2)*Math.pow(x + 2,3)","fpp":"6*Math.pow(x,5) + 5*Math.pow(x,4) - 44*(x*x*x) - 39*(x*x) + 52*x + 20"},"dom":{"ints":[[null,null]],"closed":[[false,false]],"excl":[],"tex":"\\mathbb{R}"},"sing":[],"vtan":[],"view":[-3.2,3.6,-120,260],"signs":{"fp":{"pts":[-2.0,1.0,3.0],"ptex":["-2","1","3"],"kinds":["crit","crit","crit"],"s":["+","-","-","+"]},"fpp":{"pts":[-2.0,-0.333333333333,1.0,2.5],"ptex":["-2","- \\frac{1}{3}","1","\\frac{5}{2}"],"kinds":["cero","cero","cero","cero"],"s":["-","-","+","-","+"]}},"crit":[{"x":-2.0,"xtex":"-2","y":29.4476190476,"ytex":"\\frac{3092}{105}","kind":"crit","type":"max"},{"x":1.0,"xtex":"1","y":-10.4738095238,"ytex":"- \\frac{4399}{420}","kind":"crit","type":"none","infl":true},{"x":3.0,"xtex":"3","y":-111.921428571,"ytex":"- \\frac{15669}{140}","kind":"crit","type":"min"}],"infl":[{"x":-0.333333333333,"xtex":"- \\frac{1}{3}","y":8.75921680057,"ytex":"8.7592","htan":false,"vtan":false},{"x":1.0,"xtex":"1","y":-10.4738095238,"ytex":"- \\frac{4399}{420}","htan":true,"vtan":false},{"x":2.5,"xtex":"\\frac{5}{2}","y":-75.9970238095,"ytex":"- \\frac{25535}{336}","htan":false,"vtan":false}],"asym":{"v":[],"h":[],"o":[]},"sym":null,"cuts":{"y":0.0,"ytex":"0","x":[{"x":-3.07626826695,"xtex":"-3.0763"},{"x":0.0,"xtex":"0"},{"x":3.514256294,"xtex":"3.5143"}]},"nota":"Solo se conoce f'. Aquí f es la antiderivada con f(0)=0."},{"id":"136","alias":"Ej. 136","grupo":"absolutos","nivel":"B","tex":{"f":"x^{3}-3x^{2}-9x+2,\\ x\\in[-2,2]","fp":"3(x+1)(x-3)","fpp":"6(x-1)"},"js":{"f":"(x*x*x) - 3*(x*x) - 9*x + 2","fp":"3*(x*x) - 6*x - 9","fpp":"6*x - 6"},"dom":{"ints":[[-2,2]],"closed":[[true,true]],"excl":[],"tex":"[-2,2]"},"sing":[],"vtan":[],"view":[-2.6,2.6,-24,10],"signs":{"fp":{"pts":[-2.0,-1.0,2.0],"ptex":["-2","-1","2"],"kinds":["extremo","crit","extremo"],"s":["∅","+","-","∅"]},"fpp":{"pts":[-2.0,1.0,2.0],"ptex":["-2","1","2"],"kinds":["extremo","cero","extremo"],"s":["∅","-","+","∅"]}},"crit":[{"x":-2.0,"xtex":"-2","y":0.0,"ytex":"0","kind":"extremo","type":"min"},{"x":-1.0,"xtex":"-1","y":7.0,"ytex":"7","kind":"crit","type":"max"},{"x":2.0,"xtex":"2","y":-20.0,"ytex":"-20","kind":"extremo","type":"min"}],"infl":[{"x":1.0,"xtex":"1","y":-9.0,"ytex":"-9","htan":false,"vtan":false}],"asym":{"v":[],"h":[],"o":[]},"sym":null,"cuts":{"y":2.0,"ytex":"2","x":[{"x":0.208712152522,"xtex":"0.2087"}]},"nota":null},{"id":"139","alias":"Ej. 139","grupo":"absolutos","nivel":"I","tex":{"f":"3x^{2/3}-2x,\\ x\\in[-1,1]","fp":"2\\left(x^{-1/3}-1\\right)=\\dfrac{2(1-x^{1/3})}{x^{1/3}}","fpp":"-\\dfrac{2}{3}x^{-4/3}"},"js":{"f":"3*rpow(x,2,3) - 2*x","fp":"-2 + 2/rpow(x,1,3)","fpp":"-(2/3)/rpow(x,4,3)"},"dom":{"ints":[[-1,1]],"closed":[[true,true]],"excl":[],"tex":"[-1,1]"},"sing":[0],"vtan":[],"view":[-1.3,1.3,-1,5.5],"signs":{"fp":{"pts":[-1.0,0.0,1.0],"ptex":["-1","0","1"],"kinds":["extremo","sing","extremo"],"s":["∅","-","+","∅"]},"fpp":{"pts":[-1.0,0.0,1.0],"ptex":["-1","0","1"],"kinds":["extremo","sing","extremo"],"s":["∅","-","-","∅"]}},"crit":[{"x":-1.0,"xtex":"-1","y":5.0,"ytex":"5","kind":"extremo","type":"max"},{"x":0.0,"xtex":"0","y":0.0,"ytex":"0","kind":"sing","type":"min"},{"x":1.0,"xtex":"1","y":1.0,"ytex":"1","kind":"extremo","type":"max"}],"infl":[],"asym":{"v":[],"h":[],"o":[]},"sym":null,"cuts":{"y":0.0,"ytex":"0","x":[{"x":0.0,"xtex":"0"}]},"nota":null},{"id":"152","alias":"152 (ejemplo)","grupo":"absolutos","nivel":"B","tex":{"f":"x+\\dfrac{4}{x}","fp":"1-\\dfrac{4}{x^{2}}=\\dfrac{(x-2)(x+2)}{x^{2}}","fpp":"\\dfrac{8}{x^{3}}"},"js":{"f":"x + 4/x","fp":"1 - 4/(x*x)","fpp":"8/(x*x*x)"},"dom":{"ints":[[null,0],[0,null]],"closed":[[false,false],[false,false]],"excl":[0],"tex":"(-\\infty,0)\\cup(0,\\infty)"},"sing":[],"vtan":[],"view":[-7,7,-10,10],"signs":{"fp":{"pts":[-2.0,0.0,2.0],"ptex":["-2","0","2"],"kinds":["crit","asint","crit"],"s":["+","-","-","+"]},"fpp":{"pts":[0.0],"ptex":["0"],"kinds":["asint"],"s":["-","+"]}},"crit":[{"x":-2.0,"xtex":"-2","y":-4.0,"ytex":"-4","kind":"crit","type":"max"},{"x":2.0,"xtex":"2","y":4.0,"ytex":"4","kind":"crit","type":"min"}],"infl":[],"asym":{"v":[{"x":0.0,"xtex":"0","left":"-inf","right":"+inf"}],"h":[],"o":[{"m":1.0,"b":0.0,"mtex":"1","btex":"0","side":"left"},{"m":1.0,"b":0.0,"mtex":"1","btex":"0","side":"right"}]},"sym":"impar","cuts":{"y":null,"ytex":null,"x":[]},"nota":null},{"id":"157","alias":"157(b) / 162","grupo":"concavidad","nivel":"A","tex":{"f":"(x^{2}-4)^{3}","fp":"6x(x^{2}-4)^{2}","fpp":"6(x^{2}-4)(5x^{2}-4)"},"js":{"f":"Math.pow((x*x) - 4,3)","fp":"6*x*Math.pow((x*x) - 4,2)","fpp":"30*Math.pow(x,4) - 144*(x*x) + 96"},"dom":{"ints":[[null,null]],"closed":[[false,false]],"excl":[],"tex":"\\mathbb{R}"},"sing":[],"vtan":[],"view":[-3.2,3.2,-80,60],"signs":{"fp":{"pts":[-2.0,0.0,2.0],"ptex":["-2","0","2"],"kinds":["crit","crit","crit"],"s":["-","-","+","+"]},"fpp":{"pts":[-2.0,-0.894427191,0.894427191,2.0],"ptex":["-2","- \\frac{2 \\sqrt{5}}{5}","\\frac{2 \\sqrt{5}}{5}","2"],"kinds":["cero","cero","cero","cero"],"s":["+","-","+","-","+"]}},"crit":[{"x":-2.0,"xtex":"-2","y":0.0,"ytex":"0","kind":"crit","type":"none","infl":true},{"x":0.0,"xtex":"0","y":-64.0,"ytex":"-64","kind":"crit","type":"min"},{"x":2.0,"xtex":"2","y":0.0,"ytex":"0","kind":"crit","type":"none","infl":true}],"infl":[{"x":-2.0,"xtex":"-2","y":0.0,"ytex":"0","htan":true,"vtan":false},{"x":-0.894427191,"xtex":"- \\frac{2 \\sqrt{5}}{5}","y":-32.768,"ytex":"- \\frac{4096}{125}","htan":false,"vtan":false},{"x":0.894427191,"xtex":"\\frac{2 \\sqrt{5}}{5}","y":-32.768,"ytex":"- \\frac{4096}{125}","htan":false,"vtan":false},{"x":2.0,"xtex":"2","y":0.0,"ytex":"0","htan":true,"vtan":false}],"asym":{"v":[],"h":[],"o":[]},"sym":"par","cuts":{"y":-64.0,"ytex":"-64","x":[{"x":-2.0,"xtex":"-2"},{"x":2.0,"xtex":"2"}]},"nota":null},{"id":"160","alias":"Ej. 160","grupo":"concavidad","nivel":"B","tex":{"f":"10x^{3}-3x^{5}","fp":"15x^{2}(2-x^{2})","fpp":"60x(1-x^{2})"},"js":{"f":"-3*Math.pow(x,5) + 10*(x*x*x)","fp":"15*(x*x)*(2 - (x*x))","fpp":"60*x*(1 - (x*x))"},"dom":{"ints":[[null,null]],"closed":[[false,false]],"excl":[],"tex":"\\mathbb{R}"},"sing":[],"vtan":[],"view":[-2.2,2.2,-12,12],"signs":{"fp":{"pts":[-1.41421356237,0.0,1.41421356237],"ptex":["- \\sqrt{2}","0","\\sqrt{2}"],"kinds":["crit","crit","crit"],"s":["-","+","+","-"]},"fpp":{"pts":[-1.0,0.0,1.0],"ptex":["-1","0","1"],"kinds":["cero","cero","cero"],"s":["+","-","+","-"]}},"crit":[{"x":-1.41421356237,"xtex":"- \\sqrt{2}","y":-11.313708499,"ytex":"- 8 \\sqrt{2}","kind":"crit","type":"min"},{"x":0.0,"xtex":"0","y":0.0,"ytex":"0","kind":"crit","type":"none","infl":true},{"x":1.41421356237,"xtex":"\\sqrt{2}","y":11.313708499,"ytex":"8 \\sqrt{2}","kind":"crit","type":"max"}],"infl":[{"x":-1.0,"xtex":"-1","y":-7.0,"ytex":"-7","htan":false,"vtan":false},{"x":0.0,"xtex":"0","y":0.0,"ytex":"0","htan":true,"vtan":false},{"x":1.0,"xtex":"1","y":7.0,"ytex":"7","htan":false,"vtan":false}],"asym":{"v":[],"h":[],"o":[]},"sym":"impar","cuts":{"y":0.0,"ytex":"0","x":[{"x":-1.82574185835,"xtex":"-1.8257"},{"x":0.0,"xtex":"0"},{"x":1.82574185835,"xtex":"1.8257"}]},"nota":null},{"id":"163","alias":"Ej. 163","grupo":"concavidad","nivel":"I","tex":{"f":"\\dfrac{x}{x^{2}+3}","fp":"\\dfrac{3-x^{2}}{(x^{2}+3)^{2}}","fpp":"\\dfrac{2x(x^{2}-9)}{(x^{2}+3)^{3}}"},"js":{"f":"x/((x*x) + 3)","fp":"(3 - (x*x))/(Math.pow(x,4) + 6*(x*x) + 9)","fpp":"2*x*((x*x) - 9)/Math.pow((x*x) + 3,3)"},"dom":{"ints":[[null,null]],"closed":[[false,false]],"excl":[],"tex":"\\mathbb{R}"},"sing":[],"vtan":[],"view":[-7,7,-0.4,0.4],"signs":{"fp":{"pts":[-1.73205080757,1.73205080757],"ptex":["- \\sqrt{3}","\\sqrt{3}"],"kinds":["crit","crit"],"s":["-","+","-"]},"fpp":{"pts":[-3.0,0.0,3.0],"ptex":["-3","0","3"],"kinds":["cero","cero","cero"],"s":["-","+","-","+"]}},"crit":[{"x":-1.73205080757,"xtex":"- \\sqrt{3}","y":-0.288675134595,"ytex":"- \\frac{\\sqrt{3}}{6}","kind":"crit","type":"min"},{"x":1.73205080757,"xtex":"\\sqrt{3}","y":0.288675134595,"ytex":"\\frac{\\sqrt{3}}{6}","kind":"crit","type":"max"}],"infl":[{"x":-3.0,"xtex":"-3","y":-0.25,"ytex":"- \\frac{1}{4}","htan":false,"vtan":false},{"x":0.0,"xtex":"0","y":0.0,"ytex":"0","htan":false,"vtan":false},{"x":3.0,"xtex":"3","y":0.25,"ytex":"\\frac{1}{4}","htan":false,"vtan":false}],"asym":{"v":[],"h":[{"y":0.0,"ytex":"0","side":"left"},{"y":0.0,"ytex":"0","side":"right"}],"o":[]},"sym":"impar","cuts":{"y":0.0,"ytex":"0","x":[{"x":0.0,"xtex":"0"}]},"nota":null},{"id":"165","alias":"165(a) / 183","grupo":"concavidad","nivel":"I","tex":{"f":"xe^{x}","fp":"(x+1)e^{x}","fpp":"(x+2)e^{x}"},"js":{"f":"x*Math.exp(x)","fp":"(x + 1)*Math.exp(x)","fpp":"(x + 2)*Math.exp(x)"},"dom":{"ints":[[null,null]],"closed":[[false,false]],"excl":[],"tex":"\\mathbb{R}"},"sing":[],"vtan":[],"view":[-6,2,-1,3],"signs":{"fp":{"pts":[-1.0],"ptex":["-1"],"kinds":["crit"],"s":["-","+"]},"fpp":{"pts":[-2.0],"ptex":["-2"],"kinds":["cero"],"s":["-","+"]}},"crit":[{"x":-1.0,"xtex":"-1","y":-0.367879441171,"ytex":"- \\frac{1}{e}","kind":"crit","type":"min"}],"infl":[{"x":-2.0,"xtex":"-2","y":-0.270670566473,"ytex":"- \\frac{2}{e^{2}}","htan":false,"vtan":false}],"asym":{"v":[],"h":[{"y":0.0,"ytex":"0","side":"left"}],"o":[]},"sym":null,"cuts":{"y":0.0,"ytex":"0","x":[{"x":0.0,"xtex":"0"}]},"nota":null},{"id":"182","alias":"Ej. 182","grupo":"concavidad","nivel":"I","tex":{"f":"e^{-x^{2}}","fp":"-2xe^{-x^{2}}","fpp":"2(2x^{2}-1)e^{-x^{2}}"},"js":{"f":"Math.exp(-(x*x))","fp":"-2*x*Math.exp(-(x*x))","fpp":"2*(2*(x*x) - 1)*Math.exp(-(x*x))"},"dom":{"ints":[[null,null]],"closed":[[false,false]],"excl":[],"tex":"\\mathbb{R}"},"sing":[],"vtan":[],"view":[-3,3,-0.6,1.3],"signs":{"fp":{"pts":[0.0],"ptex":["0"],"kinds":["crit"],"s":["+","-"]},"fpp":{"pts":[-0.707106781187,0.707106781187],"ptex":["- \\frac{\\sqrt{2}}{2}","\\frac{\\sqrt{2}}{2}"],"kinds":["cero","cero"],"s":["+","-","+"]}},"crit":[{"x":0.0,"xtex":"0","y":1.0,"ytex":"1","kind":"crit","type":"max"}],"infl":[{"x":-0.707106781187,"xtex":"- \\frac{\\sqrt{2}}{2}","y":0.606530659713,"ytex":"e^{- \\frac{1}{2}}","htan":false,"vtan":false},{"x":0.707106781187,"xtex":"\\frac{\\sqrt{2}}{2}","y":0.606530659713,"ytex":"e^{- \\frac{1}{2}}","htan":false,"vtan":false}],"asym":{"v":[],"h":[{"y":0.0,"ytex":"0","side":"left"},{"y":0.0,"ytex":"0","side":"right"}],"o":[]},"sym":"par","cuts":{"y":1.0,"ytex":"1","x":[]},"nota":null},{"id":"170","alias":"Ej. 170","grupo":"asintotas","nivel":"B","tex":{"f":"\\dfrac{x^{4}+x^{2}}{x^{4}+1}","fp":"- \\frac{2 x \\left(x^{4} - 2 x^{2} - 1\\right)}{\\left(x^{4} + 1\\right)^{2}}","fpp":"\\frac{2 \\left(3 x^{8} - 10 x^{6} - 12 x^{4} + 6 x^{2} + 1\\right)}{\\left(x^{4} + 1\\right)^{3}}"},"js":{"f":"(Math.pow(x,4) + (x*x))/(Math.pow(x,4) + 1)","fp":"2*x*(-Math.pow(x,4) + 2*(x*x) + 1)/(Math.pow(x,8) + 2*Math.pow(x,4) + 1)","fpp":"2*(3*Math.pow(x,8) - 10*Math.pow(x,6) - 12*Math.pow(x,4) + 6*(x*x) + 1)/(Math.pow(x,12) + 3*Math.pow(x,8) + 3*Math.pow(x,4) + 1)"},"dom":{"ints":[[null,null]],"closed":[[false,false]],"excl":[],"tex":"\\mathbb{R}"},"sing":[],"vtan":[],"view":[-4,4,-0.3,1.8],"signs":{"fp":{"pts":[-1.55377397403,0.0,1.55377397403],"ptex":["- \\sqrt{1 + \\sqrt{2}}","0","\\sqrt{1 + \\sqrt{2}}"],"kinds":["crit","crit","crit"],"s":["+","-","+","-"]},"fpp":{"pts":[-2.04267491938,-0.703377448726,0.703377448726,2.04267491938],"ptex":["-2.0427","-0.7034","0.7034","2.0427"],"kinds":["cero","cero","cero","cero"],"s":["+","-","+","-","+"]}},"crit":[{"x":-1.55377397403,"xtex":"- \\sqrt{1 + \\sqrt{2}}","y":1.20710678119,"ytex":"1.2071","kind":"crit","type":"max"},{"x":0.0,"xtex":"0","y":0.0,"ytex":"0","kind":"crit","type":"min"},{"x":1.55377397403,"xtex":"\\sqrt{1 + \\sqrt{2}}","y":1.20710678119,"ytex":"1.2071","kind":"crit","type":"max"}],"infl":[{"x":-2.04267491938,"xtex":"-2.0427","y":1.17232660952,"ytex":"1.1723","htan":false,"vtan":false},{"x":-0.703377448726,"xtex":"-0.7034","y":0.594092742048,"ytex":"0.5941","htan":false,"vtan":false},{"x":0.703377448726,"xtex":"0.7034","y":0.594092742048,"ytex":"0.5941","htan":false,"vtan":false},{"x":2.04267491938,"xtex":"2.0427","y":1.17232660952,"ytex":"1.1723","htan":false,"vtan":false}],"asym":{"v":[],"h":[{"y":1.0,"ytex":"1","side":"left"},{"y":1.0,"ytex":"1","side":"right"}],"o":[]},"sym":"par","cuts":{"y":0.0,"ytex":"0","x":[{"x":0.0,"xtex":"0"}]},"nota":null},{"id":"172","alias":"Ej. 172","grupo":"asintotas","nivel":"I","tex":{"f":"\\dfrac{x^{2}-4}{x+1}=x-1-\\dfrac{3}{x+1}","fp":"\\dfrac{x^{2}+2x+4}{(x+1)^{2}}","fpp":"-\\dfrac{6}{(x+1)^{3}}"},"js":{"f":"((x*x) - 4)/(x + 1)","fp":"(-(x*x) + 2*x*(x + 1) + 4)/Math.pow(x + 1,2)","fpp":"-6/((x*x*x) + 3*(x*x) + 3*x + 1)"},"dom":{"ints":[[null,-1],[-1,null]],"closed":[[false,false],[false,false]],"excl":[-1],"tex":"(-\\infty,-1)\\cup(-1,\\infty)"},"sing":[],"vtan":[],"view":[-8,8,-14,12],"signs":{"fp":{"pts":[-1.0],"ptex":["-1"],"kinds":["asint"],"s":["+","+"]},"fpp":{"pts":[-1.0],"ptex":["-1"],"kinds":["asint"],"s":["+","-"]}},"crit":[],"infl":[],"asym":{"v":[{"x":-1.0,"xtex":"-1","left":"+inf","right":"-inf"}],"h":[],"o":[{"m":1.0,"b":-1.0,"mtex":"1","btex":"-1","side":"left"},{"m":1.0,"b":-1.0,"mtex":"1","btex":"-1","side":"right"}]},"sym":null,"cuts":{"y":-4.0,"ytex":"-4","x":[{"x":-2.0,"xtex":"-2"},{"x":2.0,"xtex":"2"}]},"nota":null},{"id":"174","alias":"Ej. 174","grupo":"asintotas","nivel":"A","tex":{"f":"\\dfrac{x^{2}}{\\sqrt{x^{2}-1}}","fp":"\\dfrac{x(x^{2}-2)}{(x^{2}-1)^{3/2}}","fpp":"\\dfrac{x^{2}+2}{(x^{2}-1)^{5/2}}"},"js":{"f":"(x*x)/Math.sqrt((x*x) - 1)","fp":"x*((x*x) - 2)/Math.pow((x*x) - 1,3/2)","fpp":"((x*x) + 2)/(Math.sqrt((x*x) - 1)*(Math.pow(x,4) - 2*(x*x) + 1))"},"dom":{"ints":[[null,-1],[1,null]],"closed":[[false,false],[false,false]],"excl":[-1,1],"tex":"(-\\infty,-1)\\cup(1,\\infty)"},"sing":[],"vtan":[],"view":[-6,6,-1,8],"signs":{"fp":{"pts":[-1.41421356237,-1.0,1.0,1.41421356237],"ptex":["- \\sqrt{2}","-1","1","\\sqrt{2}"],"kinds":["crit","asint","asint","crit"],"s":["-","+","∅","-","+"]},"fpp":{"pts":[-1.0,1.0],"ptex":["-1","1"],"kinds":["asint","asint"],"s":["+","∅","+"]}},"crit":[{"x":-1.41421356237,"xtex":"- \\sqrt{2}","y":2.0,"ytex":"2","kind":"crit","type":"min"},{"x":1.41421356237,"xtex":"\\sqrt{2}","y":2.0,"ytex":"2","kind":"crit","type":"min"}],"infl":[],"asym":{"v":[{"x":-1.0,"xtex":"-1","left":"+inf","right":null},{"x":1.0,"xtex":"1","left":null,"right":"+inf"}],"h":[],"o":[{"m":-1.0,"b":0.0,"mtex":"-1","btex":"0","side":"left"},{"m":1.0,"b":0.0,"mtex":"1","btex":"0","side":"right"}]},"sym":"par","cuts":{"y":null,"ytex":null,"x":[]},"nota":null},{"id":"ejA","alias":"Ejemplo (x²−1)/(x²−4)","grupo":"asintotas","nivel":"I","tex":{"f":"\\dfrac{x^{2}-1}{x^{2}-4}","fp":"\\dfrac{-6x}{(x^{2}-4)^{2}}","fpp":"\\dfrac{6(3x^{2}+4)}{(x^{2}-4)^{3}}"},"js":{"f":"((x*x) - 1)/((x*x) - 4)","fp":"-6*x/Math.pow((x*x) - 4,2)","fpp":"6*(3*(x*x) + 4)/(Math.pow(x,6) - 12*Math.pow(x,4) + 48*(x*x) - 64)"},"dom":{"ints":[[null,-2],[-2,2],[2,null]],"closed":[[false,false],[false,false],[false,false]],"excl":[-2,2],"tex":"(-\\infty,-2)\\cup(-2,2)\\cup(2,\\infty)"},"sing":[],"vtan":[],"view":[-6,6,-5,6],"signs":{"fp":{"pts":[-2.0,0.0,2.0],"ptex":["-2","0","2"],"kinds":["asint","crit","asint"],"s":["+","+","-","-"]},"fpp":{"pts":[-2.0,2.0],"ptex":["-2","2"],"kinds":["asint","asint"],"s":["+","-","+"]}},"crit":[{"x":0.0,"xtex":"0","y":0.25,"ytex":"\\frac{1}{4}","kind":"crit","type":"max"}],"infl":[],"asym":{"v":[{"x":-2.0,"xtex":"-2","left":"+inf","right":"-inf"},{"x":2.0,"xtex":"2","left":"-inf","right":"+inf"}],"h":[{"y":1.0,"ytex":"1","side":"left"},{"y":1.0,"ytex":"1","side":"right"}],"o":[]},"sym":"par","cuts":{"y":0.25,"ytex":"\\frac{1}{4}","x":[{"x":-1.0,"xtex":"-1"},{"x":1.0,"xtex":"1"}]},"nota":null},{"id":"176","alias":"Ej. 176","grupo":"graficado","nivel":"B","tex":{"f":"x^{4}-4x^{3}","fp":"4x^{2}(x-3)","fpp":"12x(x-2)"},"js":{"f":"Math.pow(x,4) - 4*(x*x*x)","fp":"4*(x*x)*(x - 3)","fpp":"12*x*(x - 2)"},"dom":{"ints":[[null,null]],"closed":[[false,false]],"excl":[],"tex":"\\mathbb{R}"},"sing":[],"vtan":[],"view":[-2,5,-32,30],"signs":{"fp":{"pts":[0.0,3.0],"ptex":["0","3"],"kinds":["crit","crit"],"s":["-","-","+"]},"fpp":{"pts":[0.0,2.0],"ptex":["0","2"],"kinds":["cero","cero"],"s":["+","-","+"]}},"crit":[{"x":0.0,"xtex":"0","y":0.0,"ytex":"0","kind":"crit","type":"none","infl":true},{"x":3.0,"xtex":"3","y":-27.0,"ytex":"-27","kind":"crit","type":"min"}],"infl":[{"x":0.0,"xtex":"0","y":0.0,"ytex":"0","htan":true,"vtan":false},{"x":2.0,"xtex":"2","y":-16.0,"ytex":"-16","htan":false,"vtan":false}],"asym":{"v":[],"h":[],"o":[]},"sym":null,"cuts":{"y":0.0,"ytex":"0","x":[{"x":0.0,"xtex":"0"},{"x":4.0,"xtex":"4"}]},"nota":null},{"id":"177","alias":"Ej. 177","grupo":"graficado","nivel":"B","tex":{"f":"(x^{2}-1)^{3}","fp":"6x(x^{2}-1)^{2}","fpp":"6(x^{2}-1)(5x^{2}-1)"},"js":{"f":"Math.pow((x*x) - 1,3)","fp":"6*x*Math.pow((x*x) - 1,2)","fpp":"30*Math.pow(x,4) - 36*(x*x) + 6"},"dom":{"ints":[[null,null]],"closed":[[false,false]],"excl":[],"tex":"\\mathbb{R}"},"sing":[],"vtan":[],"view":[-1.8,1.8,-1.6,2.5],"signs":{"fp":{"pts":[-1.0,0.0,1.0],"ptex":["-1","0","1"],"kinds":["crit","crit","crit"],"s":["-","-","+","+"]},"fpp":{"pts":[-1.0,-0.4472135955,0.4472135955,1.0],"ptex":["-1","- \\frac{\\sqrt{5}}{5}","\\frac{\\sqrt{5}}{5}","1"],"kinds":["cero","cero","cero","cero"],"s":["+","-","+","-","+"]}},"crit":[{"x":-1.0,"xtex":"-1","y":0.0,"ytex":"0","kind":"crit","type":"none","infl":true},{"x":0.0,"xtex":"0","y":-1.0,"ytex":"-1","kind":"crit","type":"min"},{"x":1.0,"xtex":"1","y":0.0,"ytex":"0","kind":"crit","type":"none","infl":true}],"infl":[{"x":-1.0,"xtex":"-1","y":0.0,"ytex":"0","htan":true,"vtan":false},{"x":-0.4472135955,"xtex":"- \\frac{\\sqrt{5}}{5}","y":-0.512,"ytex":"- \\frac{64}{125}","htan":false,"vtan":false},{"x":0.4472135955,"xtex":"\\frac{\\sqrt{5}}{5}","y":-0.512,"ytex":"- \\frac{64}{125}","htan":false,"vtan":false},{"x":1.0,"xtex":"1","y":0.0,"ytex":"0","htan":true,"vtan":false}],"asym":{"v":[],"h":[],"o":[]},"sym":"par","cuts":{"y":-1.0,"ytex":"-1","x":[{"x":-1.0,"xtex":"-1"},{"x":1.0,"xtex":"1"}]},"nota":null},{"id":"178","alias":"Ej. 178","grupo":"graficado","nivel":"I","tex":{"f":"\\dfrac{x}{x^{2}-1}","fp":"-\\dfrac{x^{2}+1}{(x^{2}-1)^{2}}","fpp":"\\dfrac{2x(x^{2}+3)}{(x^{2}-1)^{3}}"},"js":{"f":"x/((x*x) - 1)","fp":"(-(x*x) - 1)/(Math.pow(x,4) - 2*(x*x) + 1)","fpp":"2*x*((x*x) + 3)/Math.pow((x*x) - 1,3)"},"dom":{"ints":[[null,-1],[-1,1],[1,null]],"closed":[[false,false],[false,false],[false,false]],"excl":[-1,1],"tex":"(-\\infty,-1)\\cup(-1,1)\\cup(1,\\infty)"},"sing":[],"vtan":[],"view":[-5,5,-5,5],"signs":{"fp":{"pts":[-1.0,1.0],"ptex":["-1","1"],"kinds":["asint","asint"],"s":["-","-","-"]},"fpp":{"pts":[-1.0,0.0,1.0],"ptex":["-1","0","1"],"kinds":["asint","cero","asint"],"s":["-","+","-","+"]}},"crit":[],"infl":[{"x":0.0,"xtex":"0","y":-0.0,"ytex":"0","htan":false,"vtan":false}],"asym":{"v":[{"x":-1.0,"xtex":"-1","left":"-inf","right":"+inf"},{"x":1.0,"xtex":"1","left":"-inf","right":"+inf"}],"h":[{"y":0.0,"ytex":"0","side":"left"},{"y":0.0,"ytex":"0","side":"right"}],"o":[]},"sym":"impar","cuts":{"y":-0.0,"ytex":"0","x":[{"x":0.0,"xtex":"0"}]},"nota":null},{"id":"179","alias":"Ej. 179","grupo":"graficado","nivel":"I","tex":{"f":"\\dfrac{x^{2}}{x^{2}-1}","fp":"-\\dfrac{2x}{(x^{2}-1)^{2}}","fpp":"\\dfrac{2(3x^{2}+1)}{(x^{2}-1)^{3}}"},"js":{"f":"(x*x)/((x*x) - 1)","fp":"-2*x/(Math.pow(x,4) - 2*(x*x) + 1)","fpp":"2*(3*(x*x) + 1)/(Math.pow(x,6) - 3*Math.pow(x,4) + 3*(x*x) - 1)"},"dom":{"ints":[[null,-1],[-1,1],[1,null]],"closed":[[false,false],[false,false],[false,false]],"excl":[-1,1],"tex":"(-\\infty,-1)\\cup(-1,1)\\cup(1,\\infty)"},"sing":[],"vtan":[],"view":[-5,5,-5,6],"signs":{"fp":{"pts":[-1.0,0.0,1.0],"ptex":["-1","0","1"],"kinds":["asint","crit","asint"],"s":["+","+","-","-"]},"fpp":{"pts":[-1.0,1.0],"ptex":["-1","1"],"kinds":["asint","asint"],"s":["+","-","+"]}},"crit":[{"x":0.0,"xtex":"0","y":-0.0,"ytex":"0","kind":"crit","type":"max"}],"infl":[],"asym":{"v":[{"x":-1.0,"xtex":"-1","left":"+inf","right":"-inf"},{"x":1.0,"xtex":"1","left":"-inf","right":"+inf"}],"h":[{"y":1.0,"ytex":"1","side":"left"},{"y":1.0,"ytex":"1","side":"right"}],"o":[]},"sym":"par","cuts":{"y":-0.0,"ytex":"0","x":[{"x":0.0,"xtex":"0"}]},"nota":null},{"id":"180","alias":"Ej. 180","grupo":"graficado","nivel":"A","tex":{"f":"\\dfrac{x^{3}}{x^{2}-1}=x+\\dfrac{x}{x^{2}-1}","fp":"\\dfrac{x^{2}(x^{2}-3)}{(x^{2}-1)^{2}}","fpp":"\\dfrac{2x(x^{2}+3)}{(x^{2}-1)^{3}}"},"js":{"f":"(x*x*x)/((x*x) - 1)","fp":"(x*x)*((x*x) - 3)/(Math.pow(x,4) - 2*(x*x) + 1)","fpp":"2*x*((x*x) + 3)/(Math.pow(x,6) - 3*Math.pow(x,4) + 3*(x*x) - 1)"},"dom":{"ints":[[null,-1],[-1,1],[1,null]],"closed":[[false,false],[false,false],[false,false]],"excl":[-1,1],"tex":"(-\\infty,-1)\\cup(-1,1)\\cup(1,\\infty)"},"sing":[],"vtan":[],"view":[-5,5,-8,8],"signs":{"fp":{"pts":[-1.73205080757,-1.0,0.0,1.0,1.73205080757],"ptex":["- \\sqrt{3}","-1","0","1","\\sqrt{3}"],"kinds":["crit","asint","crit","asint","crit"],"s":["+","-","-","-","-","+"]},"fpp":{"pts":[-1.0,0.0,1.0],"ptex":["-1","0","1"],"kinds":["asint","cero","asint"],"s":["-","+","-","+"]}},"crit":[{"x":-1.73205080757,"xtex":"- \\sqrt{3}","y":-2.59807621135,"ytex":"- \\frac{3 \\sqrt{3}}{2}","kind":"crit","type":"max"},{"x":0.0,"xtex":"0","y":-0.0,"ytex":"0","kind":"crit","type":"none","infl":true},{"x":1.73205080757,"xtex":"\\sqrt{3}","y":2.59807621135,"ytex":"\\frac{3 \\sqrt{3}}{2}","kind":"crit","type":"min"}],"infl":[{"x":0.0,"xtex":"0","y":-0.0,"ytex":"0","htan":true,"vtan":false}],"asym":{"v":[{"x":-1.0,"xtex":"-1","left":"-inf","right":"+inf"},{"x":1.0,"xtex":"1","left":"-inf","right":"+inf"}],"h":[],"o":[{"m":1.0,"b":0.0,"mtex":"1","btex":"0","side":"left"},{"m":1.0,"b":0.0,"mtex":"1","btex":"0","side":"right"}]},"sym":"impar","cuts":{"y":-0.0,"ytex":"0","x":[{"x":0.0,"xtex":"0"}]},"nota":null},{"id":"181","alias":"Ej. 181","grupo":"graficado","nivel":"I","tex":{"f":"\\dfrac{x^{3}}{x^{2}+1}=x-\\dfrac{x}{x^{2}+1}","fp":"\\dfrac{x^{2}(x^{2}+3)}{(x^{2}+1)^{2}}","fpp":"\\dfrac{2x(3-x^{2})}{(x^{2}+1)^{3}}"},"js":{"f":"(x*x*x)/((x*x) + 1)","fp":"(x*x)*((x*x) + 3)/(Math.pow(x,4) + 2*(x*x) + 1)","fpp":"2*x*(3 - (x*x))/(Math.pow(x,6) + 3*Math.pow(x,4) + 3*(x*x) + 1)"},"dom":{"ints":[[null,null]],"closed":[[false,false]],"excl":[],"tex":"\\mathbb{R}"},"sing":[],"vtan":[],"view":[-5,5,-5,5],"signs":{"fp":{"pts":[0.0],"ptex":["0"],"kinds":["crit"],"s":["+","+"]},"fpp":{"pts":[-1.73205080757,0.0,1.73205080757],"ptex":["- \\sqrt{3}","0","\\sqrt{3}"],"kinds":["cero","cero","cero"],"s":["+","-","+","-"]}},"crit":[{"x":0.0,"xtex":"0","y":0.0,"ytex":"0","kind":"crit","type":"none","infl":true}],"infl":[{"x":-1.73205080757,"xtex":"- \\sqrt{3}","y":-1.29903810568,"ytex":"- \\frac{3 \\sqrt{3}}{4}","htan":false,"vtan":false},{"x":0.0,"xtex":"0","y":0.0,"ytex":"0","htan":true,"vtan":false},{"x":1.73205080757,"xtex":"\\sqrt{3}","y":1.29903810568,"ytex":"\\frac{3 \\sqrt{3}}{4}","htan":false,"vtan":false}],"asym":{"v":[],"h":[],"o":[{"m":1.0,"b":0.0,"mtex":"1","btex":"0","side":"left"},{"m":1.0,"b":0.0,"mtex":"1","btex":"0","side":"right"}]},"sym":"impar","cuts":{"y":0.0,"ytex":"0","x":[{"x":0.0,"xtex":"0"}]},"nota":null},{"id":"185","alias":"Ej. 185","grupo":"graficado","nivel":"A","tex":{"f":"x^{2}e^{-x}","fp":"x(2-x)e^{-x}","fpp":"(x^{2}-4x+2)e^{-x}"},"js":{"f":"(x*x)*Math.exp(-x)","fp":"x*(2 - x)*Math.exp(-x)","fpp":"((x*x) - 4*x + 2)*Math.exp(-x)"},"dom":{"ints":[[null,null]],"closed":[[false,false]],"excl":[],"tex":"\\mathbb{R}"},"sing":[],"vtan":[],"view":[-1.5,8,-0.2,1.4],"signs":{"fp":{"pts":[0.0,2.0],"ptex":["0","2"],"kinds":["crit","crit"],"s":["-","+","-"]},"fpp":{"pts":[0.585786437627,3.41421356237],"ptex":["2 - \\sqrt{2}","\\sqrt{2} + 2"],"kinds":["cero","cero"],"s":["+","-","+"]}},"crit":[{"x":0.0,"xtex":"0","y":0.0,"ytex":"0","kind":"crit","type":"min"},{"x":2.0,"xtex":"2","y":0.541341132946,"ytex":"\\frac{4}{e^{2}}","kind":"crit","type":"max"}],"infl":[{"x":0.585786437627,"xtex":"2 - \\sqrt{2}","y":0.191018226057,"ytex":"0.191","htan":false,"vtan":false},{"x":3.41421356237,"xtex":"\\sqrt{2} + 2","y":0.383536990513,"ytex":"0.3835","htan":false,"vtan":false}],"asym":{"v":[],"h":[{"y":0.0,"ytex":"0","side":"right"}],"o":[]},"sym":null,"cuts":{"y":0.0,"ytex":"0","x":[{"x":0.0,"xtex":"0"}]},"nota":null},{"id":"186","alias":"Ej. 186","grupo":"graficado","nivel":"A","tex":{"f":"(x^{2}-1)^{2/3}","fp":"\\dfrac{4}{3}\\,\\dfrac{x}{(x^{2}-1)^{1/3}}","fpp":"\\dfrac{4}{9}\\,\\dfrac{x^{2}-3}{(x^{2}-1)^{4/3}}"},"js":{"f":"rpow((x*x) - 1,2,3)","fp":"(4/3)*x/rpow((x*x) - 1,1,3)","fpp":"(4/9)*((x*x) - 3)/rpow((x*x) - 1,4,3)"},"dom":{"ints":[[null,null]],"closed":[[false,false]],"excl":[],"tex":"\\mathbb{R}"},"sing":[-1,1],"vtan":[],"view":[-3,3,-0.5,4],"signs":{"fp":{"pts":[-1.0,0.0,1.0],"ptex":["-1","0","1"],"kinds":["sing","crit","sing"],"s":["-","+","-","+"]},"fpp":{"pts":[-1.73205080757,-1.0,1.0,1.73205080757],"ptex":["- \\sqrt{3}","-1","1","\\sqrt{3}"],"kinds":["cero","sing","sing","cero"],"s":["+","-","-","-","+"]}},"crit":[{"x":-1.0,"xtex":"-1","y":0.0,"ytex":"0","kind":"sing","type":"min"},{"x":0.0,"xtex":"0","y":1.0,"ytex":"1","kind":"crit","type":"max"},{"x":1.0,"xtex":"1","y":0.0,"ytex":"0","kind":"sing","type":"min"}],"infl":[{"x":-1.73205080757,"xtex":"- \\sqrt{3}","y":1.58740105197,"ytex":"2^{\\frac{2}{3}}","htan":false,"vtan":false},{"x":1.73205080757,"xtex":"\\sqrt{3}","y":1.58740105197,"ytex":"2^{\\frac{2}{3}}","htan":false,"vtan":false}],"asym":{"v":[],"h":[],"o":[]},"sym":"par","cuts":{"y":1.0,"ytex":"1","x":[]},"nota":null},{"id":"ejB","alias":"Ejemplo x·e^{−x²/2}","grupo":"graficado","nivel":"I","tex":{"f":"xe^{-x^{2}/2}","fp":"(1-x^{2})e^{-x^{2}/2}","fpp":"x(x^{2}-3)e^{-x^{2}/2}"},"js":{"f":"x*Math.exp(-1/2*(x*x))","fp":"(1 - (x*x))*Math.exp(-1/2*(x*x))","fpp":"x*((x*x) - 3)*Math.exp(-1/2*(x*x))"},"dom":{"ints":[[null,null]],"closed":[[false,false]],"excl":[],"tex":"\\mathbb{R}"},"sing":[],"vtan":[],"view":[-4,4,-0.9,0.9],"signs":{"fp":{"pts":[-1.0,1.0],"ptex":["-1","1"],"kinds":["crit","crit"],"s":["-","+","-"]},"fpp":{"pts":[-1.73205080757,0.0,1.73205080757],"ptex":["- \\sqrt{3}","0","\\sqrt{3}"],"kinds":["cero","cero","cero"],"s":["-","+","-","+"]}},"crit":[{"x":-1.0,"xtex":"-1","y":-0.606530659713,"ytex":"- \\frac{1}{e^{\\frac{1}{2}}}","kind":"crit","type":"min"},{"x":1.0,"xtex":"1","y":0.606530659713,"ytex":"e^{- \\frac{1}{2}}","kind":"crit","type":"max"}],"infl":[{"x":-1.73205080757,"xtex":"- \\sqrt{3}","y":-0.386472774078,"ytex":"-0.3865","htan":false,"vtan":false},{"x":0.0,"xtex":"0","y":0.0,"ytex":"0","htan":false,"vtan":false},{"x":1.73205080757,"xtex":"\\sqrt{3}","y":0.386472774078,"ytex":"0.3865","htan":false,"vtan":false}],"asym":{"v":[],"h":[{"y":0.0,"ytex":"0","side":"left"},{"y":0.0,"ytex":"0","side":"right"}],"o":[]},"sym":"impar","cuts":{"y":0.0,"ytex":"0","x":[{"x":0.0,"xtex":"0"}]},"nota":null},{"id":"x3","alias":"x³ (recíproco de Fermat)","grupo":"contra","nivel":"B","tex":{"f":"x^{3}","fp":"3x^{2}","fpp":"6x"},"js":{"f":"(x*x*x)","fp":"3*(x*x)","fpp":"6*x"},"dom":{"ints":[[null,null]],"closed":[[false,false]],"excl":[],"tex":"\\mathbb{R}"},"sing":[],"vtan":[],"view":[-2,2,-3,3],"signs":{"fp":{"pts":[0.0],"ptex":["0"],"kinds":["crit"],"s":["+","+"]},"fpp":{"pts":[0.0],"ptex":["0"],"kinds":["cero"],"s":["-","+"]}},"crit":[{"x":0.0,"xtex":"0","y":0.0,"ytex":"0","kind":"crit","type":"none","infl":true}],"infl":[{"x":0.0,"xtex":"0","y":0.0,"ytex":"0","htan":true,"vtan":false}],"asym":{"v":[],"h":[],"o":[]},"sym":"impar","cuts":{"y":0.0,"ytex":"0","x":[{"x":0.0,"xtex":"0"}]},"nota":null},{"id":"x4","alias":"x⁴ (f''(0)=0 sin inflexión)","grupo":"contra","nivel":"B","tex":{"f":"x^{4}","fp":"4x^{3}","fpp":"12x^{2}"},"js":{"f":"Math.pow(x,4)","fp":"4*(x*x*x)","fpp":"12*(x*x)"},"dom":{"ints":[[null,null]],"closed":[[false,false]],"excl":[],"tex":"\\mathbb{R}"},"sing":[],"vtan":[],"view":[-1.6,1.6,-0.5,3],"signs":{"fp":{"pts":[0.0],"ptex":["0"],"kinds":["crit"],"s":["-","+"]},"fpp":{"pts":[0.0],"ptex":["0"],"kinds":["cero"],"s":["+","+"]}},"crit":[{"x":0.0,"xtex":"0","y":0.0,"ytex":"0","kind":"crit","type":"min"}],"infl":[],"asym":{"v":[],"h":[],"o":[]},"sym":"par","cuts":{"y":0.0,"ytex":"0","x":[{"x":0.0,"xtex":"0"}]},"nota":null},{"id":"x13","alias":"∛x (inflexión con tangente vertical)","grupo":"contra","nivel":"B","tex":{"f":"\\sqrt[3]{x}","fp":"\\dfrac{1}{3x^{2/3}}","fpp":"-\\dfrac{2}{9x^{5/3}}"},"js":{"f":"rpow(x,1,3)","fp":"(1/3)/rpow(x,2,3)","fpp":"-(2/9)/rpow(x,5,3)"},"dom":{"ints":[[null,null]],"closed":[[false,false]],"excl":[],"tex":"\\mathbb{R}"},"sing":[0],"vtan":[0],"view":[-2.5,2.5,-1.8,1.8],"signs":{"fp":{"pts":[0.0],"ptex":["0"],"kinds":["sing"],"s":["+","+"]},"fpp":{"pts":[0.0],"ptex":["0"],"kinds":["sing"],"s":["+","-"]}},"crit":[{"x":0.0,"xtex":"0","y":0.0,"ytex":"0","kind":"sing","type":"none"}],"infl":[{"x":0.0,"xtex":"0","y":0.0,"ytex":"0","htan":false,"vtan":true}],"asym":{"v":[],"h":[],"o":[]},"sym":"impar","cuts":{"y":0.0,"ytex":"0","x":[{"x":0.0,"xtex":"0"}]},"nota":null}]};
+function rpow(b,p,q){ const r = b===0 ? (p>0?0:Infinity) : Math.pow(Math.abs(b), p/q); return (b<0 && p%2!==0) ? -r : r; }
+const $ = s => document.querySelector(s);
+const params = new URLSearchParams(location.search);
+const EMBED = params.get('embed')==='1';
+if (EMBED) document.body.classList.add('embed');
+
+/* ==================================================================== estado */
+const S = {
+  item:null, libre:false, F:null, FP:null, FPP:null,
+  view:{x0:-5,x1:5,y0:-5,y1:5}, view0:{x0:-5,x1:5,y0:-5,y1:5},
+  x0:0.5, layers:{f:true,fp:false,fpp:false,tan:true}, rev:{asin:false,crit:false,infl:false},
+  signos:{fp:{pts:[],signs:[]}, fpp:{pts:[],signs:[]}}, reveal:{fp:false,fpp:false},
+};
+const NO_DOM = {ints:[[null,null]],closed:[[false,false]],excl:[],tex:'\\mathbb{R}'};
+
+function inDom(x, item){
+  const d = item ? item.dom : NO_DOM;
+  if (d.excl.some(e=>Math.abs(e-x)<1e-12)) return false;
+  return d.ints.some(([a,b],i)=>{
+    const [ca,cb] = d.closed[i]||[false,false];
+    const okA = a===null || (ca ? x>=a : x>a); const okB = b===null || (cb ? x<=b : x<b);
+    return okA && okB;
+  });
+}
+function mkFn(expr){ try { return new Function('x', 'return ('+expr+');'); } catch(e){ return ()=>NaN; } }
+function safe(fn, x){ try { const v = fn(x); return (typeof v==='number') ? v : NaN; } catch(e){ return NaN; } }
+
+/* ==================================================================== KaTeX */
+function tex(el, s, display){ if(!window.katex){ el.textContent = s; return; } try { katex.render(s, el, {displayMode:!!display, throwOnError:false}); } catch(e){ el.textContent = s; } }
+function texStr(s){ if(!window.katex) return s; try { return katex.renderToString(s,{throwOnError:false}); } catch(e){ return s; } }
+function autoRender(el){ if(window.renderMathInElement) renderMathInElement(el,{delimiters:[{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}],throwOnError:false}); }
+
+/* ==================================================================== catálogo UI */
+function construirLista(filtro){
+  const cont = $('#lista'); cont.innerHTML='';
+  const f = (filtro||'').trim().toLowerCase();
+  for (const [g, nombre] of Object.entries(CATALOGO.grupos)){
+    const items = CATALOGO.items.filter(it=>it.grupo===g && (!f || it.alias.toLowerCase().includes(f) || it.id.toLowerCase().includes(f) || it.tex.f.toLowerCase().includes(f)));
+    if (!items.length) continue;
+    const div = document.createElement('div'); div.className='grupo';
+    div.innerHTML = '<h3>'+nombre+'</h3>';
+    for (const it of items){
+      const el = document.createElement('div'); el.className='item'+(S.item&&S.item.id===it.id?' sel':''); el.dataset.id=it.id;
+      el.innerHTML = '<span class="num">'+(it.alias.startsWith('Ej. ')?it.alias.slice(4):it.alias.split(' ')[0])+'</span><span class="f"></span><span class="nivel '+it.nivel+'">'+it.nivel+'</span>';
+      tex(el.querySelector('.f'), it.tex.f.split('=')[0].replace(/,\\ x\\in.*$/,''));
+      el.title = it.alias;
+      el.addEventListener('click', ()=>{ cargar(it.id); });
+      div.appendChild(el);
+    }
+    cont.appendChild(div);
+  }
+}
+$('#buscar').addEventListener('input', e=>construirLista(e.target.value));
+
+/* ==================================================================== cargar función */
+function cargar(id, opts){
+  const it = CATALOGO.items.find(i=>i.id===id); if(!it) return;
+  S.item = it; S.libre=false;
+  S.F = mkFn(it.js.f); S.FP = mkFn(it.js.fp); S.FPP = mkFn(it.js.fpp);
+  const [x0,x1,y0,y1] = it.view; S.view0 = {x0,x1,y0,y1}; S.view = {...S.view0};
+  S.x0 = Math.round(((x0+x1)/2 + (x1-x0)*0.13)*100)/100;
+  if (it.id==='130') S.x0 = 1.5;
+  if (!opts || !opts.keep){ S.rev = {asin:false,crit:false,infl:false}; S.layers.fp=false; S.layers.fpp=false; S.layers.f=true; }
+  S.signos = {fp:{pts:[],signs:[]}, fpp:{pts:[],signs:[]}}; S.reveal={fp:false,fpp:false};
+  ['#tablaFp','#tablaFpp','#msgFp','#msgFpp','#msgAs','#solAs'].forEach(s=>$(s).innerHTML='');
+  ['#asV','#asH','#asO'].forEach(s=>$(s).value='');
+  document.querySelectorAll('.item').forEach(e=>e.classList.toggle('sel', e.dataset.id===id));
+  sincronizarControles(); dibujarFormulas(); construirPlan(); dibujarRectas(); actualizar();
+  const u = new URL(location.href); u.searchParams.set('f', id); history.replaceState(null,'',u);
+}
+
+/* ---- modo libre (math.js, carga diferida) */
+let mathjsCargando = null;
+function cargarMathjs(){
+  if (window.math) return Promise.resolve();
+  if (!mathjsCargando) mathjsCargando = new Promise((res,rej)=>{ const s=document.createElement('script'); s.src='https://cdnjs.cloudflare.com/ajax/libs/mathjs/13.2.0/math.min.js'; s.onload=res; s.onerror=rej; document.head.appendChild(s); });
+  return mathjsCargando;
+}
+async function cargarLibre(src){
+  src = (src||'').trim(); if(!src) return;
+  try { await cargarMathjs(); } catch(e){ alert('No se pudo cargar la biblioteca de álgebra simbólica (math.js). Revise la conexión.'); return; }
+  let node, d1, d2;
+  try { node = math.parse(src.replace(/\bln\(/g,'log(').replace(/\bsen\(/g,'sin(').replace(/\btg\(/g,'tan(')); d1 = math.derivative(node,'x'); d2 = math.derivative(d1,'x'); }
+  catch(e){ alert('No se pudo interpretar la expresión: '+e.message); return; }
+  const c0 = node.compile(), c1 = d1.compile(), c2 = d2.compile();
+  const ev = c => x => { try { const v = c.evaluate({x}); return (typeof v==='number')?v:(v&&v.re!==undefined&&Math.abs(v.im)<1e-12?v.re:NaN); } catch(e){ return NaN; } };
+  const F = ev(c0), FP = ev(c1), FPP = ev(c2);
+  const opt = {parenthesis:'auto', implicit:'hide'};
+  const simp = n => { try { return math.rationalize(n).toTex(opt); } catch(e){} try { return math.simplify(n).toTex(opt); } catch(e){ return n.toTex(opt); } };
+  S.item = { id:'libre', alias:'Modo libre', grupo:'libre', nivel:'', tex:{f:node.toTex(opt), fp:simp(d1), fpp:simp(d2)},
+    dom:NO_DOM, sing:[], vtan:[], view:[-5,5,-5,5], crit:[], infl:[], asym:{v:[],h:[],o:[]}, sym:null, cuts:{x:[],y:null}, nota:null, libre:true,
+    signs:{fp:{pts:[],kinds:[]},fpp:{pts:[],kinds:[]}} };
+  S.libre = true; S.F=F; S.FP=FP; S.FPP=FPP;
+  S.view0 = {x0:-5,x1:5,y0:-5,y1:5}; S.view={...S.view0}; S.x0 = 0.5;
+  // análisis numérico en el rango de la vista
+  analisisNumerico(S.item, F, FP, FPP, -5, 5);
+  S.signos = {fp:{pts:[],signs:[]}, fpp:{pts:[],signs:[]}}; S.reveal={fp:false,fpp:false};
+  ['#tablaFp','#tablaFpp','#msgFp','#msgFpp','#msgAs','#solAs'].forEach(s=>$(s).innerHTML='');
+  document.querySelectorAll('.item').forEach(e=>e.classList.remove('sel'));
+  sincronizarControles(); dibujarFormulas(); construirPlan(); dibujarRectas(); actualizar();
+}
+$('#btnLibre').addEventListener('click', ()=>cargarLibre($('#exprLibre').value));
+$('#exprLibre').addEventListener('keydown', e=>{ if(e.key==='Enter') cargarLibre(e.target.value); });
+
+/* análisis numérico (modo libre): raíces de f' y f'' por cambio de signo, singularidades por no finitud */
+function analisisNumerico(item, F, FP, FPP, a, b){
+  const N = 4000, h=(b-a)/N;
+  function raices(G){
+    const out=[]; let px=a, pv=safe(G,a);
+    for(let i=1;i<=N;i++){ const x=a+i*h, v=safe(G,x);
+      if(isFinite(v)&&isFinite(pv)){
+        if(v===0){ out.push(x); }
+        else if((v<0)!==(pv<0) && Math.abs(v)<1e6 && Math.abs(pv)<1e6){ let lo=px,hi=x,flo=pv; for(let k=0;k<60;k++){const m=(lo+hi)/2,fm=safe(G,m); if((fm<0)===(flo<0)){lo=m;flo=fm;}else hi=m;} out.push((lo+hi)/2); }
+        else if(isFinite(v)&&isFinite(pv)&&Math.abs(v)<=Math.abs(pv)&&i<N){ /* mínimo de |G| tangencial */ const nv=safe(G,x+h); if(isFinite(nv)&&Math.abs(nv)>Math.abs(v)&&(nv<0)===(pv<0)&&Math.abs(v)<1e-6*Math.max(1,Math.abs(pv))){ out.push(x); } }
+      }
+      px=x; pv=v; }
+    return out.filter((r,i,arr)=>i===0||Math.abs(r-arr[i-1])>1e-6);
+  }
+  const gaps=[]; let prevFin=null;
+  for(let i=0;i<=N;i++){ const x=a+i*h, fin=isFinite(safe(F,x)); if(prevFin!==null && fin!==prevFin) gaps.push(x-h/2); prevFin=fin; }
+  const r1=raices(FP), r2=raices(FPP);
+  const sing = []; for(const x of gaps){ const r=Math.round(x*1000)/1000; if(sing.length && Math.abs(r-sing[sing.length-1])<=2.5*h){ sing[sing.length-1]=Math.round(((sing[sing.length-1]+r)/2)*1000)/1000; } else sing.push(r); }
+  const fmt = v => Math.abs(v-Math.round(v))<1e-7? String(Math.round(v)) : v.toFixed(3);
+  item.signs = { fp:{pts:[...r1,...sing].sort((p,q)=>p-q), kinds:[...r1.map(()=>'crit'),...sing.map(()=>'borde')]}, fpp:{pts:[...r2,...sing].sort((p,q)=>p-q), kinds:[...r2.map(()=>'cero'),...sing.map(()=>'borde')]} };
+  item.signs.fp.ptex = item.signs.fp.pts.map(fmt); item.signs.fpp.ptex = item.signs.fpp.pts.map(fmt);
+  item.crit = r1.map(x=>{ const l=safe(FP,x-1e-4), r=safe(FP,x+1e-4); const t=(l>0&&r<0)?'max':(l<0&&r>0)?'min':'none'; return {x, xtex:fmt(x), y:safe(F,x), ytex:fmt(safe(F,x)), kind:'crit', type:t}; });
+  item.infl = r2.map(x=>{ const l=safe(FPP,x-1e-4), r=safe(FPP,x+1e-4); return ((l<0)!==(r<0) && isFinite(safe(FP,x)))?{x, xtex:fmt(x), y:safe(F,x), ytex:fmt(safe(F,x)), htan:Math.abs(safe(FP,x))<1e-9, vtan:false}:null; }).filter(Boolean);
+  item.dom = {ints:[[null,null]],closed:[[false,false]],excl:sing,tex:'\\text{(numérico)}'};
+  item.nota = 'Modo libre: la partición, los extremos y las inflexiones se estiman numéricamente en el rango [−5, 5]; las asíntotas no se verifican.';
+}
+
+/* ==================================================================== controles */
+function sincronizarControles(){
+  $('#capaF').checked=S.layers.f; $('#capaFp').checked=S.layers.fp; $('#capaFpp').checked=S.layers.fpp; $('#capaTan').checked=S.layers.tan;
+  $('#revAsin').checked=S.rev.asin; $('#revCrit').checked=S.rev.crit; $('#revInfl').checked=S.rev.infl;
+  const r=$('#x0r'); r.min=S.view.x0; r.max=S.view.x1; r.step=Math.max(0.001,(S.view.x1-S.view.x0)/1000); r.value=S.x0; $('#x0n').value=S.x0;
+}
+for (const [id,key,obj] of [['#capaF','f','layers'],['#capaFp','fp','layers'],['#capaFpp','fpp','layers'],['#capaTan','tan','layers'],['#revAsin','asin','rev'],['#revCrit','crit','rev'],['#revInfl','infl','rev']]){
+  $(id).addEventListener('change', e=>{ S[obj][key]=e.target.checked; actualizar(); });
+}
+$('#x0r').addEventListener('input', e=>{ S.x0=parseFloat(e.target.value); $('#x0n').value=S.x0; actualizar(); });
+$('#x0n').addEventListener('change', e=>{ const v=parseFloat(e.target.value); if(isFinite(v)){ S.x0=v; $('#x0r').value=v; actualizar(); } });
+$('#btnZoomIn').addEventListener('click', ()=>zoom(0.7)); $('#btnZoomOut').addEventListener('click', ()=>zoom(1/0.7));
+$('#btnReset').addEventListener('click', ()=>{ S.view={...S.view0}; sincronizarControles(); actualizar(); });
+function zoom(k, cx, cy){
+  const v=S.view; cx = cx===undefined ? (v.x0+v.x1)/2 : cx; cy = cy===undefined ? (v.y0+v.y1)/2 : cy;
+  S.view = {x0:cx+(v.x0-cx)*k, x1:cx+(v.x1-cx)*k, y0:cy+(v.y0-cy)*k, y1:cy+(v.y1-cy)*k}; sincronizarControles(); actualizar();
+}
+document.querySelectorAll('.pestanas button').forEach(b=>b.addEventListener('click', ()=>mostrarTab(b.dataset.tab)));
+function mostrarTab(t){ document.querySelectorAll('.pestanas button').forEach(b=>b.classList.toggle('act', b.dataset.tab===t)); document.querySelectorAll('.tab').forEach(d=>d.classList.toggle('act', d.id==='tab-'+t)); if(t==='signos') dibujarRectas(); }
+$('#btnAyuda').addEventListener('click', ()=>{ $('#ayuda').classList.remove('oculto'); autoRender($('#ayuda')); });
+$('#btnAyuda2').addEventListener('click', ()=>{ $('#ayuda').classList.remove('oculto'); autoRender($('#ayuda')); });
+$('#btnCerrarAyuda').addEventListener('click', ()=>$('#ayuda').classList.add('oculto'));
+$('#ayuda').addEventListener('click', e=>{ if(e.target.id==='ayuda') $('#ayuda').classList.add('oculto'); });
+$('#btnAbrir').addEventListener('click', ()=>{ const u=new URL(location.href); u.searchParams.delete('embed'); window.open(u.toString(),'_blank'); });
+$('#btnTodo').addEventListener('click', ()=>{ S.layers={f:true,fp:true,fpp:true,tan:true}; S.rev={asin:true,crit:true,infl:true}; sincronizarControles(); actualizar(); });
+
+/* ==================================================================== gráfica */
+const canvas = $('#plot'), ctx = canvas.getContext('2d');
+let W=0,H=0,DPR=1;
+function medir(){ const r=canvas.parentElement.getBoundingClientRect(); DPR=window.devicePixelRatio||1; W=Math.max(50,Math.floor(r.width)); H=Math.max(50,Math.floor(r.height)); canvas.width=W*DPR; canvas.height=H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0); }
+new ResizeObserver(()=>{ medir(); dibujar(); }).observe(canvas.parentElement);
+const PAD={l:46,r:12,t:12,b:26};
+function X(x){ const v=S.view; return PAD.l+(x-v.x0)/(v.x1-v.x0)*(W-PAD.l-PAD.r); }
+function Y(y){ const v=S.view; return H-PAD.b-(y-v.y0)/(v.y1-v.y0)*(H-PAD.t-PAD.b); }
+function xDe(px){ const v=S.view; return v.x0+(px-PAD.l)/(W-PAD.l-PAD.r)*(v.x1-v.x0); }
+function yDe(py){ const v=S.view; return v.y0+(H-PAD.b-py)/(H-PAD.t-PAD.b)*(v.y1-v.y0); }
+function paso(rango, n){ const r=rango/n, p=Math.pow(10,Math.floor(Math.log10(r))), m=r/p; return p*(m<1.5?1:m<3.5?2:m<7.5?5:10); }
+function fmtNum(v, d){ if(!isFinite(v)) return v>0?'+∞':v<0?'−∞':'no existe'; const s = Math.abs(v)<1e-10 ? '0' : (Math.abs(v)>=1e5||Math.abs(v)<1e-3 ? v.toExponential(2) : (+v.toFixed(d===undefined?4:d)).toString()); return s.replace('-','−'); }
+
+function dibujar(){
+  if(!S.F){ return; }
+  const v=S.view; ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,H);
+  // rejilla
+  const sx=paso(v.x1-v.x0,8), sy=paso(v.y1-v.y0,6);
+  ctx.save(); ctx.beginPath(); ctx.rect(PAD.l,PAD.t,W-PAD.l-PAD.r,H-PAD.t-PAD.b); ctx.clip();
+  ctx.strokeStyle='#eceff1'; ctx.lineWidth=1;
+  for(let x=Math.ceil(v.x0/sx)*sx; x<=v.x1; x+=sx){ ctx.beginPath(); ctx.moveTo(X(x),PAD.t); ctx.lineTo(X(x),H-PAD.b); ctx.stroke(); }
+  for(let y=Math.ceil(v.y0/sy)*sy; y<=v.y1; y+=sy){ ctx.beginPath(); ctx.moveTo(PAD.l,Y(y)); ctx.lineTo(W-PAD.r,Y(y)); ctx.stroke(); }
+  // ejes
+  ctx.strokeStyle='#444'; ctx.lineWidth=1.2;
+  if(v.y0<0&&v.y1>0){ ctx.beginPath(); ctx.moveTo(PAD.l,Y(0)); ctx.lineTo(W-PAD.r,Y(0)); ctx.stroke(); }
+  if(v.x0<0&&v.x1>0){ ctx.beginPath(); ctx.moveTo(X(0),PAD.t); ctx.lineTo(X(0),H-PAD.b); ctx.stroke(); }
+  // dominio fuera (sombrear tramos fuera del dominio)
+  if(S.item && !S.libre){
+    ctx.fillStyle='rgba(120,120,120,.08)';
+    const d=S.item.dom; let prev=v.x0;
+    const bordes=[]; for(let i=0;i<d.ints.length;i++){ const [a,b]=d.ints[i]; bordes.push([a===null?-Infinity:a, b===null?Infinity:b]); }
+    // tramos del eje x no cubiertos por ningún intervalo
+    let cursor=-Infinity;
+    for(const [a,b] of bordes){ if(a>cursor){ const xa=Math.max(cursor,v.x0), xb=Math.min(a,v.x1); if(xb>xa) ctx.fillRect(X(xa),PAD.t,X(xb)-X(xa),H-PAD.t-PAD.b); } cursor=Math.max(cursor,b); }
+    if(cursor<v.x1){ const xa=Math.max(cursor,v.x0); ctx.fillRect(X(xa),PAD.t,X(v.x1)-X(xa),H-PAD.t-PAD.b); }
+  }
+  // asíntotas
+  if(S.rev.asin && S.item){
+    ctx.setLineDash([6,5]); ctx.lineWidth=1.4; ctx.strokeStyle='#777';
+    for(const a of S.item.asym.v){ ctx.beginPath(); ctx.moveTo(X(a.x),PAD.t); ctx.lineTo(X(a.x),H-PAD.b); ctx.stroke(); }
+    for(const a of S.item.asym.h){ ctx.beginPath(); const xa = a.side==='left'?v.x0:(v.x0+v.x1)/2, xb = a.side==='right'?v.x1:(v.x0+v.x1)/2; const full = S.item.asym.h.length===2 || a.side==='both'; ctx.moveTo(X(full?v.x0:xa),Y(a.y)); ctx.lineTo(X(full?v.x1:xb),Y(a.y)); ctx.stroke(); }
+    for(const a of S.item.asym.o){ ctx.beginPath(); const xa = a.side==='left'?v.x0:(v.x0+v.x1)/2, xb = a.side==='right'?v.x1:(v.x0+v.x1)/2; const same = S.item.asym.o.length===2 && S.item.asym.o[0].m===S.item.asym.o[1].m && S.item.asym.o[0].b===S.item.asym.o[1].b; const p=same?v.x0:xa, q=same?v.x1:xb; ctx.moveTo(X(p),Y(a.m*p+a.b)); ctx.lineTo(X(q),Y(a.m*q+a.b)); ctx.stroke(); }
+    ctx.setLineDash([]);
+  }
+  const breaks = S.item ? [...S.item.dom.excl, ...S.item.sing] : [];
+  if(S.layers.fpp) curva(S.FPP, '#b8321f', 1.6, breaks, true);
+  if(S.layers.fp) curva(S.FP, '#1f5fa8', 1.6, breaks, true);
+  if(S.layers.f) curva(S.F, '#006747', 2.4, S.item?S.item.dom.excl:[], false);
+  // tangente
+  if(S.layers.tan && S.layers.f){
+    const y0=safe(S.F,S.x0), m=safe(S.FP,S.x0);
+    if(isFinite(y0)){
+      ctx.strokeStyle='rgba(31,95,168,.85)'; ctx.lineWidth=1.5; ctx.setLineDash([2,3]);
+      ctx.beginPath(); ctx.moveTo(X(S.x0),PAD.t); ctx.lineTo(X(S.x0),H-PAD.b); ctx.stroke(); ctx.setLineDash([]);
+      if(isFinite(m)){ ctx.strokeStyle='#1f5fa8'; ctx.lineWidth=1.8; ctx.beginPath(); ctx.moveTo(X(v.x0),Y(y0+m*(v.x0-S.x0))); ctx.lineTo(X(v.x1),Y(y0+m*(v.x1-S.x0))); ctx.stroke(); }
+      else if(S.item && S.item.vtan.some(t=>Math.abs(t-S.x0)<1e-9)){ ctx.strokeStyle='#1f5fa8'; ctx.lineWidth=1.8; ctx.beginPath(); ctx.moveTo(X(S.x0),PAD.t); ctx.lineTo(X(S.x0),H-PAD.b); ctx.stroke(); }
+      ctx.fillStyle='#1f5fa8'; ctx.beginPath(); ctx.arc(X(S.x0),Y(y0),5,0,2*Math.PI); ctx.fill(); ctx.strokeStyle='#fff'; ctx.lineWidth=1.5; ctx.stroke();
+    }
+  }
+  // puntos clave
+  if(S.item && S.rev.crit){ for(const c of S.item.crit){ if(!isFinite(c.y)) continue; marca(c.x,c.y, c.kind==='sing'?'rombo':'circulo', c.type==='max'?'#b8321f':c.type==='min'?'#1f5fa8':'#8a8f98'); } }
+  if(S.item && S.rev.infl){ for(const c of S.item.infl){ if(!isFinite(c.y)) continue; marca(c.x,c.y,'cuadro','#b7791f'); } }
+  ctx.restore();
+  // etiquetas de ejes
+  ctx.fillStyle='#555'; ctx.font='11px '+getComputedStyle(document.body).fontFamily; ctx.textAlign='center'; ctx.textBaseline='top';
+  for(let x=Math.ceil(v.x0/sx)*sx; x<=v.x1+1e-9; x+=sx){ ctx.fillText(fmtNum(x,3), X(x), H-PAD.b+4); }
+  ctx.textAlign='right'; ctx.textBaseline='middle';
+  for(let y=Math.ceil(v.y0/sy)*sy; y<=v.y1+1e-9; y+=sy){ ctx.fillText(fmtNum(y,3), PAD.l-5, Y(y)); }
+  // leyenda
+  const ley=[]; if(S.layers.f) ley.push('<span style="--c:#006747">f</span>'); if(S.layers.fp) ley.push('<span style="--c:#1f5fa8">f′</span>'); if(S.layers.fpp) ley.push('<span style="--c:#b8321f">f″</span>');
+  if(S.rev.asin) ley.push('<span style="--c:#777">asíntotas</span>'); if(S.rev.crit) ley.push('<span style="--c:#b8321f">máx</span><span style="--c:#1f5fa8">mín</span><span style="--c:#8a8f98">sin extremo</span>'); if(S.rev.infl) ley.push('<span style="--c:#b7791f">inflexión</span>');
+  $('#leyenda').innerHTML=ley.join('');
+}
+function curva(fn, color, lw, breaks, clipY){
+  const v=S.view, N=Math.min(3000,Math.max(800,W*2)), dx=(v.x1-v.x0)/N, alto=v.y1-v.y0, lim=4*alto;
+  ctx.strokeStyle=color; ctx.lineWidth=lw; ctx.lineJoin='round'; ctx.beginPath();
+  let pen=false, py=null, px=null;
+  for(let i=0;i<=N;i++){
+    const x=v.x0+i*dx;
+    if(px!==null && breaks.some(b=>px<b && b<=x)) { pen=false; py=null; px=x; continue; }
+    let y=safe(fn,x);
+    if(!isFinite(y)){ pen=false; py=null; px=x; continue; }
+    if(pen && py!==null && Math.abs(y-py)>2*alto && ((y>v.y1||y<v.y0)||(py>v.y1||py<v.y0))) { pen=false; }
+    const yc=Math.max(v.y0-lim, Math.min(v.y1+lim, y));
+    if(!pen){ ctx.moveTo(X(x),Y(yc)); pen=true; } else ctx.lineTo(X(x),Y(yc));
+    py=y; px=x;
+  }
+  ctx.stroke();
+}
+function marca(x,y,forma,color){
+  const px=X(x), py=Y(y); ctx.fillStyle=color; ctx.strokeStyle='#fff'; ctx.lineWidth=1.5; ctx.beginPath();
+  if(forma==='circulo'){ ctx.arc(px,py,5.5,0,2*Math.PI); }
+  else if(forma==='cuadro'){ ctx.rect(px-5,py-5,10,10); }
+  else { ctx.moveTo(px,py-7); ctx.lineTo(px+7,py); ctx.lineTo(px,py+7); ctx.lineTo(px-7,py); ctx.closePath(); }
+  ctx.fill(); ctx.stroke();
+}
+/* interacción con la gráfica */
+let arrastre=null;
+canvas.addEventListener('pointerdown', e=>{ canvas.setPointerCapture(e.pointerId); arrastre={x:e.offsetX,y:e.offsetY,view:{...S.view},moved:false}; });
+canvas.addEventListener('pointermove', e=>{ if(!arrastre) return; const dx=e.offsetX-arrastre.x, dy=e.offsetY-arrastre.y; if(Math.abs(dx)+Math.abs(dy)>3) arrastre.moved=true; if(!arrastre.moved) return; const v=arrastre.view, kx=(v.x1-v.x0)/(W-PAD.l-PAD.r), ky=(v.y1-v.y0)/(H-PAD.t-PAD.b); S.view={x0:v.x0-dx*kx,x1:v.x1-dx*kx,y0:v.y0+dy*ky,y1:v.y1+dy*ky}; sincronizarControles(); dibujar(); });
+canvas.addEventListener('pointerup', e=>{ if(!arrastre) return; if(!arrastre.moved){ S.x0=Math.round(xDe(e.offsetX)*100)/100; sincronizarControles(); actualizar(); } arrastre=null; });
+canvas.addEventListener('pointercancel', ()=>{ arrastre=null; });
+canvas.addEventListener('wheel', e=>{ e.preventDefault(); zoom(e.deltaY>0?1.15:1/1.15, xDe(e.offsetX), yDe(e.offsetY)); }, {passive:false});
+
+/* ==================================================================== panel: explorar */
+function dibujarFormulas(){
+  const it=S.item, cont=$('#formulas'); cont.innerHTML='';
+  const filas=[['f(x)=',it.tex.f],['f′(x)=',it.tex.fp],['f″(x)=',it.tex.fpp]];
+  for(const [et,t] of filas){ const d=document.createElement('div'); d.className='linea'; d.innerHTML='<b>'+et+'</b><span></span>'; tex(d.querySelector('span'), t); cont.appendChild(d); }
+  const d=document.createElement('div'); d.className='linea'; d.innerHTML='<b>Dom</b><span></span>'; tex(d.querySelector('span'), it.dom.tex); cont.appendChild(d);
+  $('#notaF').textContent = it.nota || '';
+  $('#tituloF').innerHTML = '<b>'+(it.alias.startsWith('Ej.')?it.alias:it.alias)+'</b> &nbsp; '+texStr('f(x)='+it.tex.f.split('=')[0].replace(/,\\ x\\in.*$/,''));
+}
+function clase(v){ return !isFinite(v)?'':(Math.abs(v)<1e-9?'cero':v>0?'pos':'neg'); }
+function actualizar(){
+  dibujar(); if(!S.item) return;
+  const x=S.x0, y=safe(S.F,x), m=safe(S.FP,x), c=safe(S.FPP,x), it=S.item;
+  const dentro = inDom(x,it);
+  const singular = it.sing.some(s=>Math.abs(s-x)<1e-9) || (dentro && !isFinite(m));
+  for(const [id,val] of [['#vF',y],['#vFp',m],['#vFpp',c]]){ const el=$(id); el.className='valor '+clase(val); el.querySelector('.v').textContent = dentro ? (id==='#vF'||!singular ? fmtNum(val) : 'no existe') : 'fuera del dominio'; }
+  const I=$('#interpretacion'); let h='';
+  if(!dentro){ h='<div class="interp rojo">x₀ no pertenece al dominio de f.</div>'; }
+  else {
+    const esCrit = isFinite(m) && Math.abs(m)<1e-9;
+    if(singular) h+='<div class="interp ocre"><span class="glifo">✦</span>f′(x₀) no existe: <b>x₀ es un punto singular</b>. Es candidato a extremo, pero el criterio de la segunda derivada no se aplica aquí; use el signo de f′ a cada lado.</div>';
+    else if(esCrit) h+='<div class="interp ocre"><span class="glifo">—</span>f′(x₀)=0: tangente horizontal, <b>x₀ es un número crítico</b>. Candidato a extremo: decida con el cambio de signo de f′ (o con f″ si f″(x₀)≠0).</div>';
+    else h+='<div class="interp"><span class="glifo">'+(m>0?'↗':'↘')+'</span>f′(x₀) '+(m>0?'&gt; 0: la tangente sube, <b>f es creciente</b> cerca de x₀.':'&lt; 0: la tangente baja, <b>f es decreciente</b> cerca de x₀.')+'</div>';
+    if(isFinite(c) && Math.abs(c)>1e-9) h+='<div class="interp azul"><span class="glifo">'+(c>0?'∪':'∩')+'</span>f″(x₀) '+(c>0?'&gt; 0: <b>cóncava hacia arriba</b>; f′ es creciente y la gráfica queda por encima de la tangente.':'&lt; 0: <b>cóncava hacia abajo</b>; f′ es decreciente y la gráfica queda por debajo de la tangente.')+(isFinite(m)&&Math.abs(m)>1e-9?' Lectura conjunta: f '+(m>0?'crece':'decrece')+' cada vez más '+((m>0)===(c>0)?'rápido':'despacio')+'.':'')+'</div>';
+    else if(isFinite(c)) h+='<div class="interp ocre"><span class="glifo">0</span>f″(x₀)=0: <b>no concluye</b> nada por sí solo. Hay inflexión solo si f″ cambia de signo al cruzar x₀ (y existe tangente).</div>';
+    else if(!singular) h+='<div class="interp ocre">f″(x₀) no existe.</div>';
+    if(esCrit && isFinite(c) && Math.abs(c)>1e-9) h+='<div class="interp '+(c<0?'rojo':'azul')+'"><b>Criterio de la segunda derivada:</b> f′(x₀)=0 y f″(x₀)'+(c<0?'&lt;0 ⇒ máximo local.':'&gt;0 ⇒ mínimo local.')+'</div>';
+  }
+  I.innerHTML=h;
+}
+
+/* ==================================================================== panel: rectas de signos */
+function rangoBase(){ return [S.view0.x0, S.view0.x1]; }
+function particionReal(cual){
+  const it=S.item, [a,b]=rangoBase(); const sg=it.signs[cual];
+  const pts=[]; sg.pts.forEach((p,i)=>{ if(p>a+1e-9 && p<b-1e-9) pts.push({x:p, tex:(sg.ptex&&sg.ptex[i])||String(p), kind:sg.kinds[i]}); });
+  return pts;
+}
+function signoTramo(fn, a, b){
+  const it=S.item; const xs=[0.21,0.37,0.5,0.63,0.79].map(t=>a+(b-a)*t).filter(x=>inDom(x,it));
+  if(!xs.length) return '∅';
+  const ss=xs.map(x=>{ const v=safe(fn,x); return !isFinite(v)?null:(Math.abs(v)<1e-12?null:(v>0?'+':'−')); }).filter(Boolean);
+  if(!ss.length) return '?'; return ss.every(s=>s===ss[0])?ss[0]:'?';
+}
+function dibujarRectas(){ for(const cual of ['fp','fpp']) dibujarRecta(cual); }
+function dibujarRecta(cual){
+  const svg = $(cual==='fp'?'#rectaFp':'#rectaFpp'); const st=S.signos[cual]; const [a,b]=rangoBase();
+  const Wd = svg.clientWidth||360, Hd=92, L=26, R=Wd-26, y=58;
+  const sx = x => L+(x-a)/(b-a)*(R-L);
+  const ns='http://www.w3.org/2000/svg'; svg.setAttribute('viewBox','0 0 '+Wd+' '+Hd); svg.innerHTML='';
+  const mk=(t,at)=>{ const e=document.createElementNS(ns,t); for(const k in at) e.setAttribute(k,at[k]); return e; };
+  const defs=mk('defs',{}); defs.innerHTML='<pattern id="rayas" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" fill="#f3f4f6"/><line x1="0" y1="0" x2="0" y2="6" stroke="#d1d5db" stroke-width="2"/></pattern>'; svg.appendChild(defs);
+  // tramos
+  const bordes=[a,...st.pts,b];
+  for(let i=0;i<bordes.length-1;i++){
+    const g=mk('g',{class:'seg'}); const x1=sx(bordes[i]), x2=sx(bordes[i+1]);
+    const fuera = S.item && !S.libre && !inDom((bordes[i]+bordes[i+1])/2, S.item) && !S.item.dom.excl.some(e=>bordes[i]<e&&e<bordes[i+1]);
+    g.appendChild(mk('rect',{x:x1,y:6,width:Math.max(1,x2-x1),height:y-8,rx:3, class: fuera?'fuera':''}));
+    const t=mk('text',{x:(x1+x2)/2,y:36, fill: st.signs[i]==='+'?'#006747':st.signs[i]==='−'?'#b8321f':'#9ca3af'}); t.textContent = st.signs[i]||'·'; g.appendChild(t);
+    g.addEventListener('click', ev=>{ ev.stopPropagation(); st.signs[i] = st.signs[i]==='+'?'−':st.signs[i]==='−'?'':'+'; dibujarRecta(cual); });
+    svg.appendChild(g);
+  }
+  // base y ticks
+  svg.appendChild(mk('line',{x1:L-8,y1:y,x2:R+8,y2:y,class:'base'}));
+  const p=paso(b-a,8); for(let x=Math.ceil(a/p)*p;x<=b+1e-9;x+=p){ svg.appendChild(mk('line',{x1:sx(x),y1:y-4,x2:sx(x),y2:y+4,stroke:'#333'})); const t=mk('text',{x:sx(x),y:y+18,'font-size':'11','text-anchor':'middle',fill:'#555'}); t.textContent=fmtNum(x,2); svg.appendChild(t); }
+  // puntos del estudiante
+  st.pts.forEach((x,i)=>{ const g=mk('g',{class:'pt'}); g.appendChild(mk('circle',{cx:sx(x),cy:y,r:7})); const t=mk('text',{x:sx(x),y:y-11}); t.textContent=fmtNum(x,2); g.appendChild(t);
+    g.addEventListener('click', ev=>{ ev.stopPropagation(); st.pts.splice(i,1); const s1=st.signs[i], s2=st.signs[i+1]; st.signs.splice(i,2, s1===s2?s1:''); dibujarRecta(cual); }); svg.appendChild(g); });
+  // añadir punto al hacer clic en la base
+  svg.onclick = ev=>{
+    const r=svg.getBoundingClientRect(); const px=(ev.clientX-r.left)*(Wd/r.width); const py=(ev.clientY-r.top)*(Hd/r.height);
+    if(py<y-14 || px<L-6 || px>R+6) return;
+    let x=a+(px-L)/(R-L)*(b-a); const snap=(b-a)>8?0.1:0.05; x=Math.round(x/snap)*snap; x=Math.round(x*1000)/1000;
+    if(st.pts.some(q=>Math.abs(q-x)<1e-9)) return;
+    let k=st.pts.findIndex(q=>q>x); if(k<0) k=st.pts.length;
+    st.pts.splice(k,0,x); st.signs.splice(k,0,st.signs[k]||''); if(st.signs.length<st.pts.length+1) st.signs.length=st.pts.length+1;
+    dibujarRecta(cual);
+  };
+}
+document.querySelectorAll('[data-lim]').forEach(b=>b.addEventListener('click',()=>{ const c=b.dataset.lim; S.signos[c]={pts:[],signs:[]}; $(c==='fp'?'#msgFp':'#msgFpp').innerHTML=''; dibujarRecta(c); }));
+document.querySelectorAll('[data-ver]').forEach(b=>b.addEventListener('click',()=>verificarRecta(b.dataset.ver)));
+document.querySelectorAll('[data-rev]').forEach(b=>b.addEventListener('click',()=>revelarTabla(b.dataset.rev)));
+function verificarRecta(cual){
+  const st=S.signos[cual], real=particionReal(cual), [a,b]=rangoBase(), tol=0.02*(b-a), fn=cual==='fp'?S.FP:S.FPP;
+  const msgs=[]; let ok=true;
+  const usados=new Set();
+  for(const p of real){ const j=st.pts.findIndex((q,idx)=>!usados.has(idx)&&Math.abs(q-p.x)<=tol); if(j<0){ ok=false; msgs.push('Falta un punto de la partición cerca de x ≈ '+fmtNum(p.x,2)+(p.kind==='asint'?' (asíntota vertical / fuera del dominio)':p.kind==='sing'?' (f′ no existe allí)':p.kind==='extremo'?' (extremo del intervalo)':'')+'.'); } else usados.add(j); }
+  st.pts.forEach((q,idx)=>{ if(!usados.has(idx)){ ok=false; msgs.push('El punto x = '+fmtNum(q,2)+' sobra: allí '+(cual==='fp'?'f′':'f″')+' no se anula, existe y no hay frontera del dominio.'); } });
+  if(ok){
+    const bordes=[a,...st.pts,b];
+    for(let i=0;i<bordes.length-1;i++){ const s=signoTramo(fn,bordes[i],bordes[i+1]); if(s==='∅') continue; const u=st.signs[i]||''; if(s!=='?' && u!==s){ ok=false; msgs.push('Signo incorrecto en ('+fmtNum(bordes[i],2)+', '+fmtNum(bordes[i+1],2)+'): usted puso «'+(u||'nada')+'».'); } }
+  }
+  const el=$(cual==='fp'?'#msgFp':'#msgFpp');
+  el.innerHTML = ok ? '<div class="caja ok"><b>Correcto.</b> Partición y signos coinciden con los de '+(cual==='fp'?'f′':'f″')+' en el rango de trabajo. Ahora escriba la conclusión: '+(cual==='fp'?'monotonía y clasificación de cada candidato.':'concavidad e inflexiones (recuerde: cambio de signo <i>y</i> tangente).')+'</div>'
+                     : '<div class="caja mal"><b>Revise:</b><ul class="msgs" style="margin:4px 0;padding-left:18px">'+msgs.map(m=>'<li>'+m+'</li>').join('')+'</ul></div>';
+}
+function revelarTabla(cual){
+  const real=particionReal(cual), [a,b]=rangoBase(), fn=cual==='fp'?S.FP:S.FPP, it=S.item;
+  const bordes=[a,...real.map(p=>p.x),b];
+  let h='<div class="scroll"><table class="tabla"><tr><th></th>';
+  const ft = v => (Math.abs(v-Math.round(v))<1e-9?String(Math.round(v)):String(+v.toFixed(2)));
+  for(let i=0;i<bordes.length-1;i++){ h+='<th>'+texStr('('+(i===0?ft(a):real[i-1].tex)+',\\ '+(i===bordes.length-2?ft(b):real[i].tex)+')')+'</th>'; if(i<real.length) h+='<th>'+texStr(real[i].tex)+'</th>'; }
+  h+='</tr><tr><th>'+(cual==='fp'?'f′':'f″')+'</th>';
+  const tipos=[];
+  for(let i=0;i<bordes.length-1;i++){ const s=signoTramo(fn,bordes[i],bordes[i+1]); h+='<td class="'+(s==='+'?'pos':s==='−'?'neg':s==='∅'?'fuera':'')+'">'+(s==='∅'?'—':s)+'</td>';
+    if(i<real.length){ const p=real[i]; let et='';
+      if(p.kind==='asint') et='<span class="etq asint">asínt./no def.</span>';
+      else if(p.kind==='borde') et='<span class="etq asint">borde</span>';
+      else if(cual==='fp'){ const c=it.crit.find(q=>Math.abs(q.x-p.x)<1e-6); const k = p.kind==='sing'?'<span class="etq sing">f′ ∄</span>':'0'; et = k + (c? (c.type==='max'?' <span class="etq max">máx</span>':c.type==='min'?' <span class="etq min">mín</span>':(c.kind==='extremo'?'':' <span class="etq none">sin extremo</span>')) : ''); }
+      else { const q=it.infl.find(q=>Math.abs(q.x-p.x)<1e-6); et = (p.kind==='sing'?'<span class="etq sing">f″ ∄</span>':'0') + (q?' <span class="etq infl">inflexión</span>':' <span class="etq none">no infl.</span>'); }
+      h+='<td>'+et+'</td>'; } }
+  h+='</tr><tr><th>f</th>';
+  for(let i=0;i<bordes.length-1;i++){ const s=signoTramo(fn,bordes[i],bordes[i+1]); h+='<td>'+(s==='∅'?'—':cual==='fp'?(s==='+'?'↗ crece':s==='−'?'↘ decrece':'?'):(s==='+'?'∪':s==='−'?'∩':'?'))+'</td>'; if(i<real.length){ const p=real[i]; const c=(cual==='fp'?it.crit:it.infl).find(q=>Math.abs(q.x-p.x)<1e-6); h+='<td>'+(c&&isFinite(c.y)?texStr('f('+p.tex+')='+(c.ytex||fmtNum(c.y))):'')+'</td>'; } }
+  h+='</tr></table></div>';
+  if(cual==='fp'){ const extra=it.crit.filter(c=>c.kind==='extremo'); if(extra.length) h+='<p class="nota">Extremos del intervalo: '+extra.map(c=>texStr('x='+c.xtex)+' → '+(c.type==='max'?'máximo local':c.type==='min'?'mínimo local':'sin extremo')).join('; ')+'. Para los <b>absolutos</b> compare los valores de f en todos los candidatos (o con los límites en los extremos si el intervalo es abierto).</p>'; const sinExt=it.crit.filter(c=>c.type==='none'&&c.kind!=='extremo'); if(sinExt.length) h+='<p class="nota">En '+sinExt.map(c=>texStr('x='+c.xtex)).join(', ')+' f′ se anula (o no existe) <b>sin cambiar de signo</b>: no hay extremo'+(sinExt.some(c=>c.infl)?'; es una inflexión con tangente horizontal.':'.')+'</p>'; }
+  else { const sinI = real.filter(p=>p.kind==='sing'||p.kind==='cero').filter(p=>!it.infl.some(q=>Math.abs(q.x-p.x)<1e-6)); if(sinI.length) h+='<p class="nota">En '+sinI.map(p=>texStr('x='+p.tex)).join(', ')+' f″ se anula o no existe pero <b>no hay inflexión</b> (no cambia la concavidad, o no hay tangente).</p>'; if(it.infl.some(q=>q.vtan)) h+='<p class="nota">Inflexión con <b>tangente vertical</b>: f″ no existe allí, pero la concavidad cambia y la tangente existe.</p>'; }
+  $(cual==='fp'?'#tablaFp':'#tablaFpp').innerHTML=h; S.reveal[cual]=true;
+  if(cual==='fp') S.rev.crit=true; else S.rev.infl=true; sincronizarControles(); actualizar();
+}
+
+/* ==================================================================== panel: asíntotas */
+function parseLista(s){ return (s||'').split(/[,;]/).map(t=>t.trim()).filter(Boolean).map(t=>{ const v=evalNum(t); return isFinite(v)?v:NaN; }); }
+function evalNum(t){ try { t=t.replace(/−/g,'-').replace(/\bpi\b/gi,'Math.PI').replace(/\be\b/g,'Math.E').replace(/\bsqrt\(/g,'Math.sqrt(').replace(/\^/g,'**'); if(!/^[0-9+\-*/().\sMathPIEsqrt]*$/.test(t)) return NaN; return Function('"use strict";return ('+t+')')(); } catch(e){ return NaN; } }
+function parseLineal(t){ // devuelve {m,b} para expresiones del tipo m*x+b
+  t=t.replace(/−/g,'-').replace(/\s+/g,'').replace(/^y=/,''); if(!t) return null;
+  try { const f=x=>{ const s=t.replace(/x/g,'('+x+')').replace(/\)\(/g,')*(').replace(/(\d)\(/g,'$1*(').replace(/\)(\d)/g,')*$1').replace(/\bpi\b/gi,'Math.PI').replace(/\^/g,'**'); if(!/^[0-9+\-*/().MathPIE]*$/.test(s)) throw 0; return Function('"use strict";return ('+s+')')(); };
+    const b=f(0), m=f(1)-b, chk=f(2)-(2*m+b); if(!isFinite(m)||!isFinite(b)||Math.abs(chk)>1e-9) return null; return {m,b}; } catch(e){ return null; }
+}
+$('#btnVerAs').addEventListener('click', ()=>{
+  const it=S.item, msgs=[]; let ok=true; const tol=1e-6;
+  if(S.libre){ $('#msgAs').innerHTML='<div class="caja mal">En modo libre no hay verificación de asíntotas: calcúlelas con límites y compruébelas visualmente (revele las capas).</div>'; return; }
+  const V=parseLista($('#asV').value), Hh=parseLista($('#asH').value), O=($('#asO').value||'').split(/[,;]/).map(t=>t.trim()).filter(Boolean).map(parseLineal);
+  if(V.some(v=>!isFinite(v))||Hh.some(v=>!isFinite(v))||O.some(o=>!o)){ $('#msgAs').innerHTML='<div class="caja mal">Hay una entrada que no se pudo interpretar. Use números (p. ej. <code>-1, 1</code>) y rectas del tipo <code>x-1</code>.</div>'; return; }
+  const rv=it.asym.v.map(a=>a.x), rh=[...new Set(it.asym.h.map(a=>a.y))], ro=[]; for(const a of it.asym.o){ if(!ro.some(q=>Math.abs(q.m-a.m)<tol&&Math.abs(q.b-a.b)<tol)) ro.push(a); }
+  const cmp=(mios,reales,nombre,eq,fmt)=>{ for(const r of reales){ if(!mios.some(m=>eq(m,r))){ ok=false; msgs.push('Falta la asíntota '+nombre+' '+fmt(r)+'.'); } } for(const m of mios){ if(!reales.some(r=>eq(m,r))){ ok=false; msgs.push('La '+nombre+' '+fmt(m)+' no es asíntota de f.'); } } };
+  cmp(V,rv,'vertical',(m,r)=>Math.abs(m-r)<1e-6,v=>'x = '+fmtNum(v,3));
+  cmp(Hh,rh,'horizontal',(m,r)=>Math.abs(m-r)<1e-6,v=>'y = '+fmtNum(v,3));
+  cmp(O,ro,'oblicua',(m,r)=>Math.abs(m.m-r.m)<1e-6&&Math.abs(m.b-r.b)<1e-6,o=>'y = '+fmtNum(o.m,3)+'x '+(o.b<0?'− ':'+ ')+fmtNum(Math.abs(o.b),3));
+  $('#msgAs').innerHTML = ok ? '<div class="caja ok"><b>Correcto.</b> Ahora determine el sentido de cada límite lateral en las verticales y por qué lado se da cada asíntota horizontal u oblicua.</div>' : '<div class="caja mal"><b>Revise:</b><ul class="msgs" style="margin:4px 0;padding-left:18px">'+msgs.map(m=>'<li>'+m+'</li>').join('')+'</ul></div>';
+});
+$('#btnRevAs').addEventListener('click', ()=>{ $('#solAs').innerHTML=htmlAsintotas(); S.rev.asin=true; sincronizarControles(); actualizar(); });
+function lim(s){ return s==='+inf'?'+\\infty':s==='-inf'?'-\\infty':s==='finito'?'\\text{finito}':'?'; }
+function htmlAsintotas(){
+  const it=S.item, A=it.asym; if(S.libre) return '<div class="caja">No disponible en modo libre.</div>';
+  let h='<div class="caja"><h4>Asíntotas de f</h4>';
+  if(!A.v.length&&!A.h.length&&!A.o.length) h+='<p>f no tiene asíntotas.</p>';
+  if(A.v.length){ h+='<p><b>Verticales:</b> '+A.v.map(a=>texStr('x='+a.xtex)).join(', ')+'.</p><ul style="margin:2px 0;padding-left:18px">'; for(const a of A.v){ if(a.left) h+='<li>'+texStr('\\lim_{x\\to '+a.xtex+'^-} f(x)='+lim(a.left))+'</li>'; if(a.right) h+='<li>'+texStr('\\lim_{x\\to '+a.xtex+'^+} f(x)='+lim(a.right))+'</li>'; } h+='</ul>'; }
+  if(A.h.length){ const ys=[...new Set(A.h.map(a=>a.ytex))]; h+='<p><b>Horizontales:</b> '+ys.map(y=>{ const lados=A.h.filter(a=>a.ytex===y).map(a=>a.side); return texStr('y='+y)+' ('+(lados.length===2?'en ambos sentidos':lados[0]==='left'?'solo cuando x→−∞':'solo cuando x→+∞')+')'; }).join('; ')+'.</p>'; }
+  if(A.o.length){ h+='<p><b>Oblicuas:</b> '+A.o.map(a=>{ const m=a.mtex==='1'?'':a.mtex==='-1'?'-':a.mtex; const b=a.btex==='0'?'':(a.btex.startsWith('-')?a.btex:'+'+a.btex); return texStr('y='+m+'x'+b)+' ('+(a.side==='left'?'cuando x→−∞':'cuando x→+∞')+')'; }).join('; ')+'.</p>'; const same = A.o.length===2 && A.o[0].m===A.o[1].m && A.o[0].b===A.o[1].b; if(same) h+='<p class="nota">La misma recta sirve en ambos sentidos.</p>'; }
+  h+='</div>'; return h;
+}
+
+/* ==================================================================== panel: plan de graficado */
+function construirPlan(){
+  const it=S.item, cont=$('#plan'); cont.innerHTML='';
+  const fx = it.tex.f.split('=')[0].replace(/,\\ x\\in.*$/,'');
+  const pasos=[
+    ['1. La propia f: dominio, simetría, cortes', ()=>{ let h='<p><b>Dominio:</b> '+texStr(it.dom.tex)+'.</p>'; h+='<p><b>Simetría:</b> '+(it.sym==='par'?'par ('+texStr('f(-x)=f(x)')+'): la gráfica es simétrica respecto del eje y.':it.sym==='impar'?'impar ('+texStr('f(-x)=-f(x)')+'): simétrica respecto del origen.':'ninguna (ni par ni impar).')+'</p>';
+        h+='<p><b>Cortes:</b> '+(it.cuts.y!==null&&it.cuts.y!==undefined?'con el eje y en '+texStr('(0,'+it.cuts.ytex+')'):'no corta el eje y (0 no está en el dominio)')+'; '+(it.cuts.x.length?'con el eje x en '+it.cuts.x.map(c=>texStr('x='+c.xtex)).join(', '):'no corta el eje x')+' (en el rango estudiado).</p>'; return h; }],
+    ['2. Asíntotas', ()=>htmlAsintotas()],
+    ['3. Signo de f′: monotonía y extremos', ()=>{ revelarTabla('fp'); return $('#tablaFp').innerHTML; }],
+    ['4. Signo de f″: concavidad e inflexiones', ()=>{ revelarTabla('fpp'); return $('#tablaFpp').innerHTML; }],
+    ['5. Valores clave', ()=>{ let h='<div class="scroll"><table class="tabla"><tr><th>x</th><th>f(x)</th><th>tipo</th></tr>'; for(const c of it.crit){ h+='<tr><td>'+texStr(c.xtex)+'</td><td>'+(isFinite(c.y)?texStr(c.ytex||fmtNum(c.y)):'—')+'</td><td>'+(c.kind==='sing'?'singular':c.kind==='extremo'?'extremo del intervalo':'crítico')+': '+(c.type==='max'?'máximo local':c.type==='min'?'mínimo local':'sin extremo'+(c.infl?' (inflexión)':''))+'</td></tr>'; } for(const c of it.infl){ if(it.crit.some(q=>Math.abs(q.x-c.x)<1e-6)) continue; h+='<tr><td>'+texStr(c.xtex)+'</td><td>'+(isFinite(c.y)?texStr(c.ytex||fmtNum(c.y)):'—')+'</td><td>inflexión'+(c.vtan?' (tangente vertical)':'')+'</td></tr>'; } h+='</table></div><p class="nota"><b>Extremos absolutos:</b> si el dominio es un intervalo cerrado, compare los valores de la tabla (incluidos los extremos del intervalo). Si es abierto o infinito, compare con los límites en los extremos del dominio: si algún valor los supera a ambos hay máximo absoluto; si es menor que ambos, mínimo absoluto.</p>'; return h; }],
+    ['6. Trazado y coherencia', ()=>'<p>Active todas las capas y revelaciones (botón «Mostrar todo en la gráfica») y compruebe que su dibujo a mano respeta: monotonía en cada tramo, concavidad en cada tramo, comportamiento junto a cada asíntota (sentido de la divergencia) y los valores clave. Luego desactive f′ y f″ y vuelva a leer la gráfica de f solo con la tabla de signos.</p>'],
+  ];
+  pasos.forEach(([tit,gen],k)=>{ const d=document.createElement('details'); d.className='paso'; d.innerHTML='<summary>'+tit+'</summary><div class="cuerpo"><button class="btn peq" type="button">Revelar solución</button><div class="sol"></div></div>'; const sol=d.querySelector('.sol'); d.querySelector('button').addEventListener('click', ()=>{ sol.innerHTML=gen(); sol.classList.add('vis'); }); cont.appendChild(d); });
+}
+
+/* ==================================================================== arranque */
+function arrancar(){
+  construirLista('');
+  autoRender($('#tab-teoria')); autoRender($('#tab-asintotas'));
+  medir();
+  const id = params.get('f'); const t = params.get('tab');
+  if (id && CATALOGO.items.some(i=>i.id===id)) cargar(id); else cargar('180');
+  const capas=(params.get('capas')||'').split(',').filter(Boolean); if(capas.length){ S.layers.fp=capas.includes('fp'); S.layers.fpp=capas.includes('fpp'); sincronizarControles(); actualizar(); }
+  if (t) mostrarTab(t);
+  if (EMBED) $('#bloqueAbrir').classList.remove('oculto');
+  if (params.get('libre')) { $('#exprLibre').value=params.get('libre'); cargarLibre(params.get('libre')); }
+}
+window.addEventListener('DOMContentLoaded', ()=>{ const esperar=()=>{ if(window.katex && window.renderMathInElement) arrancar(); else setTimeout(esperar,40); }; esperar(); setTimeout(()=>{ if(!S.F) arrancar(); }, 3000); });
+</script>
+</body>
+</html>
